@@ -4,6 +4,7 @@
 #include <input/input.h>
 #include <gui/elements.h>
 #include "card.h"
+
 #define ANIMATION_TIME furi_ms_to_ticks(1500)
 #define ANIMATION_END_MARGIN furi_ms_to_ticks(200)
 #define ROUND_PRICE 10
