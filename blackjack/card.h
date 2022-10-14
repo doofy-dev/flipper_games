@@ -36,6 +36,8 @@ void generateDeck(Deck *deck_ptr);
 
 void shuffleDeck(Deck *deck_ptr);
 
+void draw_card_animation(Card animatingCard, Vector from, Vector control, Vector to, float t, bool extra_margin, Canvas *const canvas);
+
 Vector card_pos_at_index(uint8_t index);
 bool is_at_edge(uint8_t index);
 uint8_t handCount(const Card cards[21], uint8_t count);

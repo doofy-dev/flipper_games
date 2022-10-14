@@ -1,6 +1,6 @@
 #include "util.h"
 
-static List *afterDelay;
+static QueueItem *afterDelay;
 
 float lerp(float v0, float v1, float t) {
     if(t>1) return v1;
@@ -30,42 +30,42 @@ void queue(GameState *game_state,
 ) {
     if (afterDelay == NULL) {
         game_state->animationStart = game_state->last_tick;
-        afterDelay = malloc(sizeof(List));
+        afterDelay = malloc(sizeof(QueueItem));
         afterDelay->callback = callback;
         afterDelay->processing = processing;
         afterDelay->start = start;
         afterDelay->next = NULL;
     } else {
-        List *next = afterDelay;
-        while (next->next != NULL) { next = (List *) (next->next); }
-        next->next = malloc(sizeof(List));
-        ((List *) next->next)->callback = callback;
-        ((List *) next->next)->processing = processing;
-        ((List *) next->next)->start = start;
-        ((List *) next->next)->next = NULL;
+        QueueItem *next = afterDelay;
+        while (next->next != NULL) { next = (QueueItem *) (next->next); }
+        next->next = malloc(sizeof(QueueItem));
+        ((QueueItem *) next->next)->callback = callback;
+        ((QueueItem *) next->next)->processing = processing;
+        ((QueueItem *) next->next)->start = start;
+        ((QueueItem *) next->next)->next = NULL;
     }
 }
 
 void queue_clear() {
     while (afterDelay != NULL) {
-        List *f = afterDelay;
+        QueueItem *f = afterDelay;
         free(f);
         afterDelay = f->next;
     }
 }
 
 void dequeue(GameState *game_state) {
-    ((List *) afterDelay)->callback(game_state);
-    List *f = afterDelay;
-    afterDelay = (List *) afterDelay->next;
+    ((QueueItem *) afterDelay)->callback(game_state);
+    QueueItem *f = afterDelay;
+    afterDelay = (QueueItem *) afterDelay->next;
     free(f);
     if (afterDelay != NULL && afterDelay->start != NULL)afterDelay->start(game_state);
     game_state->animationStart = game_state->last_tick;
 }
 
 void animateQueue(const GameState *game_state, Canvas *const canvas) {
-    if (afterDelay != NULL && ((List *) afterDelay)->processing != NULL) {
-        ((List *) afterDelay)->processing(game_state, canvas);
+    if (afterDelay != NULL && ((QueueItem *) afterDelay)->processing != NULL) {
+        ((QueueItem *) afterDelay)->processing(game_state, canvas);
     }
 }
 

@@ -28,25 +28,6 @@ void draw_dealer_scene(Canvas *const canvas, const GameState *game_state) {
     drawPlayerDeck((game_state->dealer_cards), max_card, canvas);
 }
 
-void draw_card_animation(Card animatingCard, Vector from, Vector control, Vector to, float t, bool extra_margin, Canvas *const canvas) {
-    float time = t;
-    if(extra_margin) {
-        time += 0.2;
-    }
-
-    Vector currentPos=quadratic_2d(from, control, to, time);
-    if (t > 1) {
-        drawCardAt(currentPos.x, currentPos.y, animatingCard.pip,
-                   animatingCard.character, Normal, canvas);
-    } else {
-        if(t<0.5)
-            drawCardBackAt(currentPos.x, currentPos.y, canvas);
-        else
-            drawCardAt(currentPos.x, currentPos.y, animatingCard.pip,
-                   animatingCard.character, Normal, canvas);
-    }
-}
-
 void popupFrame(Canvas *const canvas) {
     canvas_set_color(canvas, ColorWhite);
     canvas_draw_box(canvas, 32, 15, 66, 13);

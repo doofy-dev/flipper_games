@@ -254,3 +254,23 @@ uint8_t handCount(const Card cards[21], uint8_t count) {
 
     return score;
 }
+
+void draw_card_animation(Card animatingCard, Vector from, Vector control, Vector to, float t, bool extra_margin,
+                         Canvas *const canvas) {
+    float time = t;
+    if (extra_margin) {
+        time += 0.2;
+    }
+
+    Vector currentPos = quadratic_2d(from, control, to, time);
+    if (t > 1) {
+        drawCardAt(currentPos.x, currentPos.y, animatingCard.pip,
+                   animatingCard.character, Normal, canvas);
+    } else {
+        if (t < 0.5)
+            drawCardBackAt(currentPos.x, currentPos.y, canvas);
+        else
+            drawCardAt(currentPos.x, currentPos.y, animatingCard.pip,
+                       animatingCard.character, Normal, canvas);
+    }
+}

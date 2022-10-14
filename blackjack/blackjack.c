@@ -158,46 +158,47 @@ void dealerTurn(GameState *game_state) {
     game_state->state = GameStateDealer;
 }
 
-void dealer_card_animation(const GameState *game_state, Canvas *const canvas){
+void dealer_card_animation(const GameState *game_state, Canvas *const canvas) {
     float t = (float) (furi_get_tick() - game_state->animationStart) / (ANIMATION_TIME - ANIMATION_END_MARGIN);
     Card animatingCard = game_state->deck.cards[game_state->deck.index];
-    if(game_state->dealer_card_count>1){
+    if (game_state->dealer_card_count > 1) {
         Vector end = card_pos_at_index(game_state->dealer_card_count);
-        if(!is_at_edge(game_state->dealer_card_count))
-            end.x-=CARD_HALF_WIDTH;
+        if (!is_at_edge(game_state->dealer_card_count))
+            end.x -= CARD_HALF_WIDTH;
         draw_card_animation(animatingCard,
-                            (Vector){0, 64},
-                            (Vector){0, 32},
+                            (Vector) {0, 64},
+                            (Vector) {0, 32},
                             end,
                             t,
                             true,
                             canvas);
-    }else{
+    } else {
         draw_card_animation(animatingCard,
-                            (Vector){32, -CARD_HEIGHT},
-                            (Vector){64, 32},
-                            (Vector){2,2},
+                            (Vector) {32, -CARD_HEIGHT},
+                            (Vector) {64, 32},
+                            (Vector) {2, 2},
                             t,
                             false,
                             canvas);
 //        drawPlayerDeck(game_state->dealer_cards, game_state->dealer_card_count, canvas);
     }
 }
-void dealer_back_card_animation(const GameState *game_state, Canvas *const canvas){
+
+void dealer_back_card_animation(const GameState *game_state, Canvas *const canvas) {
     float t = (float) (furi_get_tick() - game_state->animationStart) / (ANIMATION_TIME - ANIMATION_END_MARGIN);
-    Vector currentPos=quadratic_2d((Vector){32, -CARD_HEIGHT}, (Vector){64, 32}, (Vector){13,5},t);
+    Vector currentPos = quadratic_2d((Vector) {32, -CARD_HEIGHT}, (Vector) {64, 32}, (Vector) {13, 5}, t);
     drawCardBackAt(currentPos.x, currentPos.y, canvas);
 }
 
-void player_card_animation(const GameState *game_state, Canvas *const canvas){
+void player_card_animation(const GameState *game_state, Canvas *const canvas) {
     float t = (float) (furi_get_tick() - game_state->animationStart) / (ANIMATION_TIME - ANIMATION_END_MARGIN);
     Card animatingCard = game_state->deck.cards[game_state->deck.index];
     Vector end = card_pos_at_index(game_state->player_card_count);
-    if(!is_at_edge(game_state->player_card_count))
-        end.x-=CARD_HALF_WIDTH;
+    if (!is_at_edge(game_state->player_card_count))
+        end.x -= CARD_HALF_WIDTH;
     draw_card_animation(animatingCard,
-                        (Vector){32, -CARD_HEIGHT},
-                        (Vector){0, 32},
+                        (Vector) {32, -CARD_HEIGHT},
+                        (Vector) {0, 32},
                         end,
                         t,
                         true,

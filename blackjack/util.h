@@ -6,7 +6,7 @@ typedef struct{
     void (*processing)(const GameState *game_state, Canvas *const canvas);
     void (*start)(GameState *game_state);
     void *next;
-} List;
+} QueueItem;
 
 struct Vector{
     float x;
