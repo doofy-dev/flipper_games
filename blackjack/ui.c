@@ -13,7 +13,8 @@ void draw_player_scene(Canvas *const canvas, const GameState *game_state) {
     if (max_card > 0)
         drawPlayerDeck((game_state->player_cards), max_card, canvas);
 
-    drawCardBackAt(13, 5, canvas);
+    if(game_state->dealer_card_count>0)
+        drawCardBackAt(13, 5, canvas);
 
     max_card = game_state->dealer_card_count;
     if (max_card > 1) {
@@ -27,19 +28,22 @@ void draw_dealer_scene(Canvas *const canvas, const GameState *game_state) {
     drawPlayerDeck((game_state->dealer_cards), max_card, canvas);
 }
 
-void draw_card_animation(const GameState *game_state, Canvas *const canvas) {
-    float t = (float) (furi_get_tick() - game_state->animationStart) / (ANIMATION_TIME - ANIMATION_END_MARGIN);
-    t *= 2;
-    Card animatingCard = game_state->deck.cards[game_state->deck.index];
+void draw_card_animation(Card animatingCard, Vector from, Vector control, Vector to, float t, bool extra_margin, Canvas *const canvas) {
+    float time = t;
+    if(extra_margin) {
+        time += 0.2;
+    }
+
+    Vector currentPos=quadratic_2d(from, control, to, time);
     if (t > 1) {
-        int cardY = round(lerp(-CARD_HEIGHT, 10, 1));
-        drawCardAt(64 - CARD_HALF_WIDHT, cardY, animatingCard.pip,
+        drawCardAt(currentPos.x, currentPos.y, animatingCard.pip,
                    animatingCard.character, Normal, canvas);
     } else {
-        int cardY = round(lerp(-CARD_HEIGHT, 10, t));
-        drawCardAt(64 - CARD_HALF_WIDHT, cardY, animatingCard.pip,
+        if(t<0.5)
+            drawCardBackAt(currentPos.x, currentPos.y, canvas);
+        else
+            drawCardAt(currentPos.x, currentPos.y, animatingCard.pip,
                    animatingCard.character, Normal, canvas);
-//        drawCardBackAt(64 - CARD_HALF_WIDHT, cardY, canvas);
     }
 }
 

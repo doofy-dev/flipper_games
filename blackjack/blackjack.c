@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <dolphin/dolphin.h>
 #include <math.h>
-
+#include "util.h"
 #include "defines.h"
 #include "card.h"
 #include "util.h"
@@ -157,6 +157,53 @@ void win(GameState *game_state) {
 void dealerTurn(GameState *game_state) {
     game_state->state = GameStateDealer;
 }
+
+void dealer_card_animation(const GameState *game_state, Canvas *const canvas){
+    float t = (float) (furi_get_tick() - game_state->animationStart) / (ANIMATION_TIME - ANIMATION_END_MARGIN);
+    Card animatingCard = game_state->deck.cards[game_state->deck.index];
+    if(game_state->dealer_card_count>1){
+        Vector end = card_pos_at_index(game_state->dealer_card_count);
+        if(!is_at_edge(game_state->dealer_card_count))
+            end.x-=CARD_HALF_WIDTH;
+        draw_card_animation(animatingCard,
+                            (Vector){0, 64},
+                            (Vector){0, 32},
+                            end,
+                            t,
+                            true,
+                            canvas);
+    }else{
+        draw_card_animation(animatingCard,
+                            (Vector){32, -CARD_HEIGHT},
+                            (Vector){64, 32},
+                            (Vector){2,2},
+                            t,
+                            false,
+                            canvas);
+//        drawPlayerDeck(game_state->dealer_cards, game_state->dealer_card_count, canvas);
+    }
+}
+void dealer_back_card_animation(const GameState *game_state, Canvas *const canvas){
+    float t = (float) (furi_get_tick() - game_state->animationStart) / (ANIMATION_TIME - ANIMATION_END_MARGIN);
+    Vector currentPos=quadratic_2d((Vector){32, -CARD_HEIGHT}, (Vector){64, 32}, (Vector){13,5},t);
+    drawCardBackAt(currentPos.x, currentPos.y, canvas);
+}
+
+void player_card_animation(const GameState *game_state, Canvas *const canvas){
+    float t = (float) (furi_get_tick() - game_state->animationStart) / (ANIMATION_TIME - ANIMATION_END_MARGIN);
+    Card animatingCard = game_state->deck.cards[game_state->deck.index];
+    Vector end = card_pos_at_index(game_state->player_card_count);
+    if(!is_at_edge(game_state->player_card_count))
+        end.x-=CARD_HALF_WIDTH;
+    draw_card_animation(animatingCard,
+                        (Vector){32, -CARD_HEIGHT},
+                        (Vector){0, 32},
+                        end,
+                        t,
+                        true,
+                        canvas);
+//    drawPlayerDeck(game_state->dealer_cards, game_state->player_card_count, canvas);
+}
 //endregion
 
 void player_tick(GameState *game_state) {
@@ -181,7 +228,7 @@ void player_tick(GameState *game_state) {
                 game_state->bet += ROUND_PRICE;
                 game_state->doubled = true;
                 game_state->selectedMenu = 1;
-                queue(game_state, drawPlayerCard, NULL, draw_card_animation);
+                queue(game_state, drawPlayerCard, NULL, player_card_animation);
                 game_state->player_cards[game_state->player_card_count] = game_state->deck.cards[game_state->deck.index];
                 score = handCount(game_state->player_cards, game_state->player_card_count + 1);
                 if (score > 21)
@@ -191,7 +238,7 @@ void player_tick(GameState *game_state) {
 
             } //hit
             else if (game_state->selectedMenu == 1) {
-                queue(game_state, drawPlayerCard, NULL, draw_card_animation);
+                queue(game_state, drawPlayerCard, NULL, player_card_animation);
             } //stay
             else if (game_state->selectedMenu == 2) {
                 queue(game_state, dealerTurn, NULL, to_dealer_turn);
@@ -199,7 +246,6 @@ void player_tick(GameState *game_state) {
         }
     }
 }
-
 
 void dealer_tick(GameState *game_state) {
     uint8_t dealer_score = handCount(game_state->dealer_cards, game_state->dealer_card_count);
@@ -213,7 +259,7 @@ void dealer_tick(GameState *game_state) {
         else if (dealer_score == player_score)
             queue(game_state, draw, NULL, to_draw_state);
     } else {
-        queue(game_state, drawDealerCard, NULL, draw_card_animation);
+        queue(game_state, drawDealerCard, NULL, dealer_card_animation);
     }
 }
 
@@ -222,10 +268,10 @@ void tick(GameState *game_state) {
 
     if (!game_state->started && game_state->state == GameStatePlay) {
         game_state->started = true;
-        drawDealerCard(game_state);
-        queue(game_state, drawPlayerCard, NULL, draw_card_animation);
-        queue(game_state, drawDealerCard, NULL, draw_card_animation);
-        queue(game_state, drawPlayerCard, NULL, draw_card_animation);
+        queue(game_state, drawDealerCard, NULL, dealer_back_card_animation);
+        queue(game_state, drawPlayerCard, NULL, player_card_animation);
+        queue(game_state, drawDealerCard, NULL, dealer_card_animation);
+        queue(game_state, drawPlayerCard, NULL, player_card_animation);
     }
 
     if (!run_queue(game_state)) {
