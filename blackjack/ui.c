@@ -1,6 +1,8 @@
+#include <math.h>
+#include <notification/notification_messages.h>
+
 #include "ui.h"
 #include "card.h"
-#include <math.h>
 #include "util.h"
 
 const char MoneyMul[4] = {
@@ -28,7 +30,7 @@ void draw_dealer_scene(Canvas *const canvas, const GameState *game_state) {
     drawPlayerDeck((game_state->dealer_cards), max_card, canvas);
 }
 
-void popupFrame(Canvas *const canvas) {
+void popup_frame(Canvas *const canvas) {
     canvas_set_color(canvas, ColorWhite);
     canvas_draw_box(canvas, 32, 15, 66, 13);
     canvas_set_color(canvas, ColorBlack);
@@ -36,25 +38,6 @@ void popupFrame(Canvas *const canvas) {
     canvas_set_font(canvas, FontSecondary);
 }
 
-void draw_message_scene(Canvas *const canvas, const GameState *game_state) {
-    switch (game_state->state) {
-        case GameStateStart:
-            canvas_set_font(canvas, FontPrimary);
-            elements_multiline_text_aligned(canvas, 64, 5, AlignCenter, AlignTop, "Blackjack");
-            canvas_set_font(canvas, FontSecondary);
-            elements_multiline_text_aligned(canvas, 64, 24, AlignCenter, AlignTop, "Made by Doofy");
-            elements_multiline_text_aligned(canvas, 64, 38, AlignCenter, AlignTop, "Press center button\nto start");
-            break;
-        case GameStateGameOver:
-            canvas_set_font(canvas, FontPrimary);
-            elements_multiline_text_aligned(canvas, 64, 5, AlignCenter, AlignTop, "Game Over");
-            canvas_set_font(canvas, FontSecondary);
-            elements_multiline_text_aligned(canvas, 64, 24, AlignCenter, AlignTop, "Press center button\nto start");
-            break;
-        default:
-            break;
-    }
-}
 
 void draw_play_menu(Canvas *const canvas, const GameState *game_state) {
     const char *menus[3] = {"Double", "Hit", "Stay"};
@@ -78,6 +61,15 @@ void draw_play_menu(Canvas *const canvas, const GameState *game_state) {
         else
             canvas_set_color(canvas, ColorBlack);
         canvas_draw_str_aligned(canvas, 16, y + 6, AlignCenter, AlignCenter, menus[m]);
+    }
+}
+
+void draw_screen(Canvas *const canvas, const bool* points){
+    for(uint8_t x=0;x<128;x++){
+        for(uint8_t y=0;y<64;y++){
+            if(points[y*128 + x])
+                canvas_draw_dot(canvas, x, y);
+        }
     }
 }
 

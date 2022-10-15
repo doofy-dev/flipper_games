@@ -2,19 +2,22 @@
 #include <gui/gui.h>
 #include <stdlib.h>
 #include <dolphin/dolphin.h>
+#include <dialogs/dialogs.h>
 #include <math.h>
+#include "screens.h"
 #include "util.h"
 #include "defines.h"
 #include "card.h"
 #include "util.h"
 #include "ui.h"
 
-#define APP_NAME "Blackjack"
-#define STARTING_MONEY 200
+#define STARTING_MONEY 10
 #define DEALER_MAX 17
 
 
 void start_round(GameState *game_state);
+
+void init(GameState *game_state);
 
 static void draw_ui(Canvas *const canvas, const GameState *game_state) {
 
@@ -37,19 +40,18 @@ static void render_callback(Canvas *const canvas, void *ctx) {
     canvas_set_color(canvas, ColorBlack);
     canvas_draw_frame(canvas, 0, 0, 128, 64);
 
-    switch (game_state->state) {
-        case GameStateStart:
-        case GameStateGameOver:
-            draw_message_scene(canvas, game_state);
-            break;
-        case GameStatePlay:
-            draw_player_scene(canvas, game_state);
-            break;
-        case GameStateDealer:
-            draw_dealer_scene(canvas, game_state);
-            break;
+    if (game_state->state == GameStateStart) {
+        draw_screen(canvas, welcome_screen);
     }
-    if (game_state->state != GameStateStart && game_state->state != GameStateGameOver) {
+    if(game_state->state==GameStateGameOver){
+        draw_screen(canvas, game_over_screen);
+    }
+
+    if (game_state->state == GameStatePlay || game_state->state == GameStateDealer) {
+        if (game_state->state == GameStatePlay)
+            draw_player_scene(canvas, game_state);
+        else
+            draw_dealer_scene(canvas, game_state);
         animateQueue(game_state, canvas);
         draw_ui(canvas, game_state);
     }
@@ -83,37 +85,37 @@ void drawDealerCard(GameState *game_state) {
 //region queue callbacks
 void to_lose_state(const GameState *game_state, Canvas *const canvas) {
     UNUSED(game_state);
-    popupFrame(canvas);
+    popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "You lost");
 }
 
 void to_bust_state(const GameState *game_state, Canvas *const canvas) {
     UNUSED(game_state);
-    popupFrame(canvas);
+    popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "Busted!");
 }
 
 void to_draw_state(const GameState *game_state, Canvas *const canvas) {
     UNUSED(game_state);
-    popupFrame(canvas);
+    popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "Draw");
 }
 
 void to_dealer_turn(const GameState *game_state, Canvas *const canvas) {
     UNUSED(game_state);
-    popupFrame(canvas);
+    popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "Dealers turn");
 }
 
 void to_win_state(const GameState *game_state, Canvas *const canvas) {
     UNUSED(game_state);
-    popupFrame(canvas);
+    popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "You win");
 }
 
 void to_start(const GameState *game_state, Canvas *const canvas) {
     UNUSED(game_state);
-    popupFrame(canvas);
+    popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "Round started");
 }
 
@@ -264,24 +266,64 @@ void dealer_tick(GameState *game_state) {
     }
 }
 
+uint8_t choose_option(const char *text, const char *left, const char *center,
+                      const char *right) {
+    DialogsApp *dialogs = furi_record_open(RECORD_DIALOGS);
+    DialogMessage *message = dialog_message_alloc();
+
+    if (text != NULL)
+        dialog_message_set_text(message, text, 64, 32, AlignCenter, AlignCenter);
+
+    dialog_message_set_buttons(message, left, center, right);
+    dialog_message_set_icon(message, NULL, 72, 17);
+
+    DialogMessageButton choice = dialog_message_show(dialogs, message);
+    dialog_message_free(message);
+    furi_record_close(RECORD_DIALOGS);
+    if (choice == DialogMessageButtonLeft) return 0;
+    if (choice == DialogMessageButtonCenter) return 1;
+    if (choice == DialogMessageButtonRight) return 2;
+    if (choice == DialogMessageButtonBack) return 3;
+    return 4;
+}
+
 void tick(GameState *game_state) {
     game_state->last_tick = furi_get_tick();
 
-    if (!game_state->started && game_state->state == GameStatePlay) {
-        game_state->started = true;
-        queue(game_state, drawDealerCard, NULL, dealer_back_card_animation);
-        queue(game_state, drawPlayerCard, NULL, player_card_animation);
-        queue(game_state, drawDealerCard, NULL, dealer_card_animation);
-        queue(game_state, drawPlayerCard, NULL, player_card_animation);
-    }
+    if (game_state->state == GameStateStart || game_state->state == GameStateGameOver) {
+      /*  uint8_t result=0;
+        if (game_state->state == GameStateGameOver)
+            result = choose_option("You ran out of money", NULL, "Play", "Settings");
+    *//*    else
+            result = choose_option(NULL, NULL, "Play", "Settings");
+*//*
+        if (result == 3) {
+            game_state->processing = false;
+            return;
+        }
+        if (result == 1) {
+            start_round(game_state);
+        } else if (result == 2) {
 
-    if (!run_queue(game_state)) {
-        if (game_state->state == GameStatePlay) {
-            player_tick(game_state);
-        } else if (game_state->state == GameStateDealer) {
-            dealer_tick(game_state);
+        }*/
+    } else {
+        if (!game_state->started && game_state->state == GameStatePlay) {
+            game_state->started = true;
+            queue(game_state, drawDealerCard, NULL, dealer_back_card_animation);
+            queue(game_state, drawPlayerCard, NULL, player_card_animation);
+            queue(game_state, drawDealerCard, NULL, dealer_card_animation);
+            queue(game_state, drawPlayerCard, NULL, player_card_animation);
+        }
+
+        if (!run_queue(game_state)) {
+            if (game_state->state == GameStatePlay) {
+                player_tick(game_state);
+            } else if (game_state->state == GameStateDealer) {
+                dealer_tick(game_state);
+            }
         }
     }
+
 
     game_state->selectDirection = None;
 
@@ -298,7 +340,7 @@ void start_round(GameState *game_state) {
     shuffleDeck(&(game_state->deck));
     game_state->doubled = false;
     game_state->bet = ROUND_PRICE;
-    if (game_state->player_score < ROUND_PRICE) {
+    if (game_state->player_score<ROUND_PRICE) {
         game_state->state = GameStateGameOver;
     } else {
         game_state->player_score -= ROUND_PRICE;
@@ -308,6 +350,7 @@ void start_round(GameState *game_state) {
 
 void init(GameState *game_state) {
     game_state->last_tick = 0;
+    game_state->processing = true;
     game_state->player_score = STARTING_MONEY;
     generateDeck(&(game_state->deck));
     start_round(game_state);
@@ -359,13 +402,11 @@ int32_t blackjack_app(void *p) {
     for (bool processing = true; processing;) {
         FuriStatus event_status = furi_message_queue_get(event_queue, &event, 100);
         GameState *game_state = (GameState *) acquire_mutex_block(&state_mutex);
-
         if (event_status == FuriStatusOk) {
             if (event.type == EventTypeKey) {
 
                 if (event.input.type == InputTypePress) {
                     switch (event.input.key) {
-
                         case InputKeyUp:
                             game_state->selectDirection = DirectionUp;
                             break;
@@ -381,7 +422,6 @@ int32_t blackjack_app(void *p) {
                         case InputKeyBack:
                             processing = false;
                             break;
-
                         case InputKeyOk:
                             if (game_state->state == GameStateGameOver || game_state->state == GameStateStart) {
                                 init(game_state);
@@ -390,9 +430,24 @@ int32_t blackjack_app(void *p) {
                             }
                             break;
                     }
+                } else if (event.input.type == InputTypeLong) {
+                    // hold events
+                    FURI_LOG_D(APP_NAME, "Got a long press!");
+                    switch (event.input.key) {
+                        case InputKeyUp:
+                        case InputKeyDown:
+                        case InputKeyRight:
+                        case InputKeyOk:
+                        case InputKeyLeft:
+                            break;
+                        case InputKeyBack:
+                            processing = false;
+                            break;
+                    }
                 }
             } else if (event.type == EventTypeTick) {
                 tick(game_state);
+                processing = game_state->processing;
             }
         } else {
             FURI_LOG_D(APP_NAME, "osMessageQueue: event timeout");

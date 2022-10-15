@@ -5,6 +5,7 @@
 #include <gui/elements.h>
 #include "card.h"
 
+#define APP_NAME "Blackjack"
 #define ANIMATION_TIME furi_ms_to_ticks(1500)
 #define ANIMATION_END_MARGIN furi_ms_to_ticks(200)
 #define ROUND_PRICE 10
@@ -13,6 +14,11 @@ typedef enum {
     EventTypeTick,
     EventTypeKey,
 } EventType;
+
+typedef struct{
+    bool enable_animation;
+    uint8_t animation_duration;
+} Settings;
 
 typedef struct {
     EventType type;
@@ -23,6 +29,7 @@ typedef enum {
     GameStateGameOver,
     GameStateStart,
     GameStatePlay,
+    GameStateSettings,
     GameStateDealer,
 } PlayState;
 
@@ -51,6 +58,7 @@ typedef struct {
     bool animating;
     bool started;
     uint8_t selectedMenu;
+    bool processing;
     Deck deck;
     PlayState state;
     unsigned int last_tick;
