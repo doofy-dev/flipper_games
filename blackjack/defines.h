@@ -18,6 +18,7 @@ typedef enum {
 typedef struct{
     bool enable_animation;
     uint8_t animation_duration;
+    uint8_t starting_money;
 } Settings;
 
 typedef struct {

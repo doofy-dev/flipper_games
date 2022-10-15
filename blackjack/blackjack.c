@@ -4,14 +4,15 @@
 #include <dolphin/dolphin.h>
 #include <dialogs/dialogs.h>
 #include <math.h>
-#include "screens.h"
 #include "util.h"
 #include "defines.h"
 #include "card.h"
 #include "util.h"
 #include "ui.h"
 
-#define STARTING_MONEY 10
+#include "blackjack_icons.h"
+
+#define STARTING_MONEY 200
 #define DEALER_MAX 17
 
 
@@ -30,7 +31,6 @@ static void draw_ui(Canvas *const canvas, const GameState *game_state) {
     }
 }
 
-
 static void render_callback(Canvas *const canvas, void *ctx) {
     const GameState *game_state = acquire_mutex((ValueMutex *) ctx, 25);
 
@@ -41,10 +41,10 @@ static void render_callback(Canvas *const canvas, void *ctx) {
     canvas_draw_frame(canvas, 0, 0, 128, 64);
 
     if (game_state->state == GameStateStart) {
-        draw_screen(canvas, welcome_screen);
+        canvas_draw_icon(canvas, 0, 0, &I_blackjack);
     }
     if(game_state->state==GameStateGameOver){
-        draw_screen(canvas, game_over_screen);
+        canvas_draw_icon(canvas, 0, 0, &I_endscreen);
     }
 
     if (game_state->state == GameStatePlay || game_state->state == GameStateDealer) {
@@ -72,6 +72,8 @@ void drawPlayerCard(GameState *game_state) {
     Card c = draw_card(game_state);
     game_state->player_cards[game_state->player_card_count] = c;
     game_state->player_card_count++;
+    if(game_state->selectedMenu==0 && (game_state->player_score<ROUND_PRICE || game_state->doubled))
+        game_state->selectedMenu=1;
 }
 
 void drawDealerCard(GameState *game_state) {
@@ -216,7 +218,7 @@ void player_tick(GameState *game_state) {
     } else if (score > 21) {
         queue(game_state, lose, NULL, to_bust_state);
     } else {
-        if (game_state->selectDirection == DirectionUp && game_state->selectedMenu > 0) {
+        if (game_state->selectDirection == DirectionUp && game_state->selectedMenu > 0 && game_state->player_score>=ROUND_PRICE && !game_state->doubled) {
             game_state->selectedMenu--;
         }
         if (game_state->selectDirection == DirectionDown && game_state->selectedMenu < 2) {
