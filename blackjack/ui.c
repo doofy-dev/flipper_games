@@ -178,11 +178,11 @@ void settings_page(Canvas *const canvas, const GameState *gameState) {
               gameState->settings.message_duration < 2000,
               gameState->selectedMenu == 4
     );
-    draw_menu(canvas, "Sound", gameState->settings.sound_effects ? "Yes" : "No",
-              5 * LINE_HEIGHT + startY,
-              true,
-              true,
-              gameState->selectedMenu == 5
-    );
+//    draw_menu(canvas, "Sound", gameState->settings.sound_effects ? "Yes" : "No",
+//              5 * LINE_HEIGHT + startY,
+//              true,
+//              true,
+//              gameState->selectedMenu == 5
+//    );
 
 }

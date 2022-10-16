@@ -295,7 +295,7 @@ void dealer_tick(GameState *game_state) {
 }
 
 void settings_tick(GameState *game_state) {
-    if (game_state->selectDirection == DirectionDown && game_state->selectedMenu < 5) {
+    if (game_state->selectDirection == DirectionDown && game_state->selectedMenu < 4) {
         game_state->selectedMenu++;
     }
     if (game_state->selectDirection == DirectionUp && game_state->selectedMenu > 0) {
