@@ -1,5 +1,7 @@
 #pragma once
 #include "defines.h"
+#define CONFIG_FILE_HEADER "Blackjack config file"
+#define CONFIG_FILE_VERSION 1
 
 typedef struct{
     void (*callback)(GameState *game_state);
@@ -23,3 +25,6 @@ void animateQueue(const GameState *gameState, Canvas *const canvas);
 void queue_clear();
 Vector lerp_2d(Vector start, Vector end, float t);
 Vector quadratic_2d(Vector start, Vector control, Vector end, float t);
+
+void save_settings(Settings *settings);
+Settings load_settings();

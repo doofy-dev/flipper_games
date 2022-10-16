@@ -15,7 +15,6 @@
 #define STARTING_MONEY 200
 #define DEALER_MAX 17
 
-
 void start_round(GameState *game_state);
 
 void init(GameState *game_state);
@@ -37,13 +36,14 @@ static void render_callback(Canvas *const canvas, void *ctx) {
     if (game_state == NULL) {
         return;
     }
+
     canvas_set_color(canvas, ColorBlack);
     canvas_draw_frame(canvas, 0, 0, 128, 64);
 
     if (game_state->state == GameStateStart) {
         canvas_draw_icon(canvas, 0, 0, &I_blackjack);
     }
-    if(game_state->state==GameStateGameOver){
+    if (game_state->state == GameStateGameOver) {
         canvas_draw_icon(canvas, 0, 0, &I_endscreen);
     }
 
@@ -54,6 +54,8 @@ static void render_callback(Canvas *const canvas, void *ctx) {
             draw_dealer_scene(canvas, game_state);
         animateQueue(game_state, canvas);
         draw_ui(canvas, game_state);
+    } else if (game_state->state == GameStateSettings) {
+        settings_page(canvas, game_state);
     }
 
     release_mutex((ValueMutex *) ctx, game_state);
@@ -72,8 +74,8 @@ void drawPlayerCard(GameState *game_state) {
     Card c = draw_card(game_state);
     game_state->player_cards[game_state->player_card_count] = c;
     game_state->player_card_count++;
-    if(game_state->selectedMenu==0 && (game_state->player_score<ROUND_PRICE || game_state->doubled))
-        game_state->selectedMenu=1;
+    if (game_state->selectedMenu == 0 && (game_state->player_score < ROUND_PRICE || game_state->doubled))
+        game_state->selectedMenu = 1;
 }
 
 void drawDealerCard(GameState *game_state) {
@@ -218,7 +220,8 @@ void player_tick(GameState *game_state) {
     } else if (score > 21) {
         queue(game_state, lose, NULL, to_bust_state);
     } else {
-        if (game_state->selectDirection == DirectionUp && game_state->selectedMenu > 0 && game_state->player_score>=ROUND_PRICE && !game_state->doubled) {
+        if (game_state->selectDirection == DirectionUp && game_state->selectedMenu > 0 &&
+            game_state->player_score >= ROUND_PRICE && !game_state->doubled) {
             game_state->selectedMenu--;
         }
         if (game_state->selectDirection == DirectionDown && game_state->selectedMenu < 2) {
@@ -268,64 +271,107 @@ void dealer_tick(GameState *game_state) {
     }
 }
 
-uint8_t choose_option(const char *text, const char *left, const char *center,
-                      const char *right) {
-    DialogsApp *dialogs = furi_record_open(RECORD_DIALOGS);
-    DialogMessage *message = dialog_message_alloc();
+void settings_tick(GameState *game_state) {
+    if (game_state->selectDirection == DirectionDown && game_state->selectedMenu < 5) {
+        game_state->selectedMenu++;
+    }
+    if (game_state->selectDirection == DirectionUp && game_state->selectedMenu > 0) {
+        game_state->selectedMenu--;
+    }
 
-    if (text != NULL)
-        dialog_message_set_text(message, text, 64, 32, AlignCenter, AlignCenter);
+    if (game_state->selectDirection == DirectionLeft || game_state->selectDirection == DirectionRight) {
+        int nextScore = 0;
+        switch (game_state->selectedMenu) {
+            case 0:
+                nextScore = game_state->settings.starting_money;
+                if (game_state->selectDirection == DirectionLeft)
+                    nextScore -= 10;
+                else
+                    nextScore += 10;
+                if (nextScore >= (int)game_state->settings.round_price && nextScore < 400)
+                    game_state->settings.starting_money = nextScore;
+                break;
+            case 1:
+                nextScore = game_state->settings.round_price;
+                if (game_state->selectDirection == DirectionLeft)
+                    nextScore -= 10;
+                else
+                    nextScore += 10;
+                if (nextScore >= 5 && nextScore <= (int)game_state->settings.starting_money)
+                    game_state->settings.round_price = nextScore;
+                break;
+            case 2:
+                nextScore = game_state->settings.animation_margin;
+                if (game_state->selectDirection == DirectionLeft)
+                    nextScore -= 100;
+                else
+                    nextScore += 100;
+                if (nextScore >= 0 && nextScore < (int)game_state->settings.animation_duration)
+                    game_state->settings.animation_margin = nextScore;
+                break;
+            case 3:
+                nextScore = game_state->settings.animation_duration;
+                if (game_state->selectDirection == DirectionLeft)
+                    nextScore -= 100;
+                else
+                    nextScore += 100;
+                if (nextScore >= (int)game_state->settings.animation_margin && nextScore < 2000)
+                    game_state->settings.animation_duration = nextScore;
+                break;
+            case 4:
+                nextScore = game_state->settings.message_duration;
+                if (game_state->selectDirection == DirectionLeft)
+                    nextScore -= 100;
+                else
+                    nextScore += 100;
+                if (nextScore >= 0 && nextScore < 2000)
+                    game_state->settings.message_duration = nextScore;
+                break;
+            case 5:
+                game_state->settings.sound_effects = !game_state->settings.sound_effects;
+            default:
+                break;
+        }
+    }
 
-    dialog_message_set_buttons(message, left, center, right);
-    dialog_message_set_icon(message, NULL, 72, 17);
-
-    DialogMessageButton choice = dialog_message_show(dialogs, message);
-    dialog_message_free(message);
-    furi_record_close(RECORD_DIALOGS);
-    if (choice == DialogMessageButtonLeft) return 0;
-    if (choice == DialogMessageButtonCenter) return 1;
-    if (choice == DialogMessageButtonRight) return 2;
-    if (choice == DialogMessageButtonBack) return 3;
-    return 4;
 }
 
 void tick(GameState *game_state) {
     game_state->last_tick = furi_get_tick();
+    bool queue_ran = run_queue(game_state);
 
-    if (game_state->state == GameStateStart || game_state->state == GameStateGameOver) {
-      /*  uint8_t result=0;
-        if (game_state->state == GameStateGameOver)
-            result = choose_option("You ran out of money", NULL, "Play", "Settings");
-    *//*    else
-            result = choose_option(NULL, NULL, "Play", "Settings");
-*//*
-        if (result == 3) {
-            game_state->processing = false;
-            return;
-        }
-        if (result == 1) {
-            start_round(game_state);
-        } else if (result == 2) {
-
-        }*/
-    } else {
-        if (!game_state->started && game_state->state == GameStatePlay) {
-            game_state->started = true;
-            queue(game_state, drawDealerCard, NULL, dealer_back_card_animation);
-            queue(game_state, drawPlayerCard, NULL, player_card_animation);
-            queue(game_state, drawDealerCard, NULL, dealer_card_animation);
-            queue(game_state, drawPlayerCard, NULL, player_card_animation);
-        }
-
-        if (!run_queue(game_state)) {
-            if (game_state->state == GameStatePlay) {
-                player_tick(game_state);
-            } else if (game_state->state == GameStateDealer) {
-                dealer_tick(game_state);
+    switch (game_state->state) {
+        case GameStateGameOver:
+        case GameStateStart:
+            if (game_state->selectDirection == Select)
+                init(game_state);
+            else if (game_state->selectDirection == DirectionRight) {
+                game_state->selectedMenu = 0;
+                game_state->state = GameStateSettings;
             }
-        }
+            break;
+        case GameStatePlay:
+            if (!game_state->started) {
+                game_state->selectedMenu = 0;
+                game_state->started = true;
+                queue(game_state, drawDealerCard, NULL, dealer_back_card_animation);
+                queue(game_state, drawPlayerCard, NULL, player_card_animation);
+                queue(game_state, drawDealerCard, NULL, dealer_card_animation);
+                queue(game_state, drawPlayerCard, NULL, player_card_animation);
+            }
+            if (!queue_ran)
+                player_tick(game_state);
+            break;
+        case GameStateDealer:
+            if (!queue_ran)
+                dealer_tick(game_state);
+            break;
+        case GameStateSettings:
+            settings_tick(game_state);
+            break;
+        default:
+            break;
     }
-
 
     game_state->selectDirection = None;
 
@@ -342,7 +388,7 @@ void start_round(GameState *game_state) {
     shuffleDeck(&(game_state->deck));
     game_state->doubled = false;
     game_state->bet = ROUND_PRICE;
-    if (game_state->player_score<ROUND_PRICE) {
+    if (game_state->player_score < ROUND_PRICE) {
         game_state->state = GameStateGameOver;
     } else {
         game_state->player_score -= ROUND_PRICE;
@@ -354,6 +400,7 @@ void init(GameState *game_state) {
     game_state->last_tick = 0;
     game_state->processing = true;
     game_state->player_score = STARTING_MONEY;
+    game_state->settings = load_settings();
     generateDeck(&(game_state->deck));
     start_round(game_state);
 }
@@ -422,28 +469,15 @@ int32_t blackjack_app(void *p) {
                             game_state->selectDirection = DirectionLeft;
                             break;
                         case InputKeyBack:
-                            processing = false;
-                            break;
-                        case InputKeyOk:
-                            if (game_state->state == GameStateGameOver || game_state->state == GameStateStart) {
-                                init(game_state);
-                            } else {
-                                game_state->selectDirection = Select;
+                            if (game_state->state == GameStateSettings) {
+                                game_state->state = GameStateStart;
+                                save_settings(&(game_state->settings));
                             }
+                            else
+                                processing = false;
                             break;
-                    }
-                } else if (event.input.type == InputTypeLong) {
-                    // hold events
-                    FURI_LOG_D(APP_NAME, "Got a long press!");
-                    switch (event.input.key) {
-                        case InputKeyUp:
-                        case InputKeyDown:
-                        case InputKeyRight:
                         case InputKeyOk:
-                        case InputKeyLeft:
-                            break;
-                        case InputKeyBack:
-                            processing = false;
+                            game_state->selectDirection = Select;
                             break;
                     }
                 }
