@@ -45,7 +45,7 @@ void popup_frame(Canvas *const canvas) {
 void draw_play_menu(Canvas *const canvas, const GameState *game_state) {
     const char *menus[3] = {"Double", "Hit", "Stay"};
     for (uint8_t m = 0; m < 3; m++) {
-        if (m == 0 && (game_state->doubled || game_state->player_score < ROUND_PRICE)) continue;
+        if (m == 0 && (game_state->doubled || game_state->player_score < game_state->settings.round_price)) continue;
         int y = m * 13 + 25;
         canvas_set_color(canvas, ColorBlack);
 
@@ -141,6 +141,7 @@ void settings_page(Canvas *const canvas, const GameState *gameState) {
 
     canvas_set_color(canvas, ColorBlack);
     canvas_draw_box(canvas, 123, scrollPos, 4, scrollHeight);
+    canvas_draw_box(canvas, 125, 0, 1, 64);
 
     snprintf(drawChar, sizeof(drawChar), "%li", gameState->settings.starting_money);
     draw_menu(canvas, "Start money", drawChar,
@@ -167,7 +168,7 @@ void settings_page(Canvas *const canvas, const GameState *gameState) {
     draw_menu(canvas, "Anim. length", drawChar,
               3 * LINE_HEIGHT + startY,
               gameState->settings.animation_duration > gameState->settings.animation_margin,
-              gameState->settings.animation_duration < 2000 ,
+              gameState->settings.animation_duration < 2000,
               gameState->selectedMenu == 3
     );
     snprintf(drawChar, sizeof(drawChar), "%li", gameState->settings.message_duration);

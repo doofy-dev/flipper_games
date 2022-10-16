@@ -8,9 +8,8 @@
 #include "card.h"
 
 #define APP_NAME "Blackjack"
-#define ANIMATION_TIME furi_ms_to_ticks(1500)
-#define ANIMATION_END_MARGIN furi_ms_to_ticks(200)
-#define ROUND_PRICE 10
+//#define ANIMATION_TIME furi_ms_to_ticks(1500)
+//#define ANIMATION_END_MARGIN furi_ms_to_ticks(200)
 
 #define CONF_ANIMATION_DURATION "AnimationDuration"
 #define CONF_ANIMATION_MARGIN "AnimationMargin"

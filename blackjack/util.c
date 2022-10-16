@@ -28,7 +28,8 @@ Vector quadratic_2d(Vector start, Vector control, Vector end, float t) {
 void queue(GameState *game_state,
            void (*callback)(GameState *game_state),
            void (*start)(GameState *game_state),
-           void (*processing)(const GameState *gameState, Canvas *const canvas)
+           void (*processing)(const GameState *gameState, Canvas *const canvas,uint32_t duration,uint32_t margin),
+           uint32_t duration,uint32_t margin
 ) {
     if (afterDelay == NULL) {
         game_state->animationStart = game_state->last_tick;
@@ -36,6 +37,8 @@ void queue(GameState *game_state,
         afterDelay->callback = callback;
         afterDelay->processing = processing;
         afterDelay->start = start;
+        afterDelay->duration = duration;
+        afterDelay->margin = margin;
         afterDelay->next = NULL;
     } else {
         QueueItem *next = afterDelay;
@@ -44,6 +47,8 @@ void queue(GameState *game_state,
         ((QueueItem *) next->next)->callback = callback;
         ((QueueItem *) next->next)->processing = processing;
         ((QueueItem *) next->next)->start = start;
+        ((QueueItem *) next->next)->duration = duration;
+        ((QueueItem *) next->next)->margin = margin;
         ((QueueItem *) next->next)->next = NULL;
     }
 }
@@ -67,14 +72,14 @@ void dequeue(GameState *game_state) {
 
 void animateQueue(const GameState *game_state, Canvas *const canvas) {
     if (afterDelay != NULL && ((QueueItem *) afterDelay)->processing != NULL) {
-        ((QueueItem *) afterDelay)->processing(game_state, canvas);
+        ((QueueItem *) afterDelay)->processing(game_state, canvas, afterDelay->duration, afterDelay->margin);
     }
 }
 
 bool run_queue(GameState *game_state) {
     if (afterDelay != NULL) {
         game_state->animating = true;
-        if ((game_state->last_tick - game_state->animationStart) > ANIMATION_TIME) {
+        if ((game_state->last_tick - game_state->animationStart) > afterDelay->duration) {
             dequeue(game_state);
         }
         return true;
@@ -83,17 +88,33 @@ bool run_queue(GameState *game_state) {
     return false;
 }
 
-void save_settings(Settings *settings) {
+void save_settings(Settings settings) {
     Storage *storage = furi_record_open(RECORD_STORAGE);
     FlipperFormat *file = flipper_format_file_alloc(storage);
+    FURI_LOG_D(APP_NAME, "Saving config");
     if (flipper_format_file_open_existing(file, CONFIG_FILE_PATH)) {
-        flipper_format_update_uint32(file, CONF_ANIMATION_DURATION, &(settings->animation_duration), 1);
-        flipper_format_update_uint32(file, CONF_ANIMATION_MARGIN, &(settings->animation_margin), 1);
-        flipper_format_update_uint32(file, CONF_MESSAGE_DURATION, &(settings->message_duration), 1);
-        flipper_format_update_uint32(file, CONF_STARTING_MONEY, &(settings->starting_money), 1);
-        flipper_format_update_uint32(file, CONF_ROUND_PRICE, &(settings->round_price), 1);
-        flipper_format_update_bool(file, CONF_SOUND_EFFECTS, &(settings->sound_effects), 1);
+        FURI_LOG_D(APP_NAME, "Saving %s: %ld", CONF_ANIMATION_DURATION, settings.animation_duration);
+        flipper_format_update_uint32(file, CONF_ANIMATION_DURATION, &(settings.animation_duration), 1);
+
+        FURI_LOG_D(APP_NAME, "Saving %s: %ld", CONF_ANIMATION_MARGIN, settings.animation_margin);
+        flipper_format_update_uint32(file, CONF_ANIMATION_MARGIN, &(settings.animation_margin), 1);
+
+        FURI_LOG_D(APP_NAME, "Saving %s: %ld", CONF_MESSAGE_DURATION, settings.message_duration);
+        flipper_format_update_uint32(file, CONF_MESSAGE_DURATION, &(settings.message_duration), 1);
+
+        FURI_LOG_D(APP_NAME, "Saving %s: %ld", CONF_STARTING_MONEY, settings.starting_money);
+        flipper_format_update_uint32(file, CONF_STARTING_MONEY, &(settings.starting_money), 1);
+
+        FURI_LOG_D(APP_NAME, "Saving %s: %ld", CONF_ROUND_PRICE, settings.round_price);
+        flipper_format_update_uint32(file, CONF_ROUND_PRICE, &(settings.round_price), 1);
+
+        FURI_LOG_D(APP_NAME, "Saving %s: %i", CONF_SOUND_EFFECTS, settings.sound_effects?1:0);
+        flipper_format_update_bool(file, CONF_SOUND_EFFECTS, &(settings.sound_effects), 1);
+        FURI_LOG_D(APP_NAME, "Config saved");
+    }else{
+        FURI_LOG_E(APP_NAME, "Save error");
     }
+    flipper_format_file_close(file);
     flipper_format_free(file);
     furi_record_close(RECORD_STORAGE);
 }
@@ -155,23 +176,35 @@ Settings load_settings() {
                 FURI_LOG_E(APP_NAME, "Config file mismatch");
             } else {
                 FURI_LOG_D(APP_NAME, "Loading %s", CONF_ANIMATION_DURATION);
-                if (flipper_format_read_uint32(file, CONF_ANIMATION_DURATION, &value, 1))
+                if (flipper_format_read_uint32(file, CONF_ANIMATION_DURATION, &value, 1)) {
                     settings.animation_duration = value;
+                    FURI_LOG_D(APP_NAME, "Loaded %s: %ld", CONF_ANIMATION_DURATION, value);
+                }
                 FURI_LOG_D(APP_NAME, "Loading %s", CONF_ANIMATION_MARGIN);
-                if (!flipper_format_read_uint32(file, CONF_ANIMATION_MARGIN, &value, 1))
+                if (flipper_format_read_uint32(file, CONF_ANIMATION_MARGIN, &value, 1)) {
                     settings.animation_margin = value;
+                    FURI_LOG_D(APP_NAME, "Loaded %s: %ld", CONF_ANIMATION_MARGIN, value);
+                }
                 FURI_LOG_D(APP_NAME, "Loading %s", CONF_MESSAGE_DURATION);
-                if (!flipper_format_read_uint32(file, CONF_MESSAGE_DURATION, &value, 1))
+                if (flipper_format_read_uint32(file, CONF_MESSAGE_DURATION, &value, 1)) {
                     settings.message_duration = value;
+                    FURI_LOG_D(APP_NAME, "Loaded %s: %ld", CONF_MESSAGE_DURATION, value);
+                }
                 FURI_LOG_D(APP_NAME, "Loading %s", CONF_STARTING_MONEY);
-                if (!flipper_format_read_uint32(file, CONF_STARTING_MONEY, &value, 1))
+                if (flipper_format_read_uint32(file, CONF_STARTING_MONEY, &value, 1)) {
                     settings.starting_money = value;
+                    FURI_LOG_D(APP_NAME, "Loaded %s: %ld", CONF_STARTING_MONEY, value);
+                }
                 FURI_LOG_D(APP_NAME, "Loading %s", CONF_ROUND_PRICE);
-                if (!flipper_format_read_uint32(file, CONF_ROUND_PRICE, &value, 1))
+                if (flipper_format_read_uint32(file, CONF_ROUND_PRICE, &value, 1)) {
                     settings.round_price = value;
+                    FURI_LOG_D(APP_NAME, "Loaded %s: %ld", CONF_ROUND_PRICE, value);
+                }
                 FURI_LOG_D(APP_NAME, "Loading %s", CONF_SOUND_EFFECTS);
-                if (!flipper_format_read_bool(file, CONF_SOUND_EFFECTS, &valueBool, 1))
+                if (flipper_format_read_bool(file, CONF_SOUND_EFFECTS, &valueBool, 1)) {
                     settings.sound_effects = valueBool;
+                    FURI_LOG_D(APP_NAME, "Loaded %s: %i", CONF_ROUND_PRICE, valueBool?1:0);
+                }
             }
             flipper_format_file_close(file);
         }

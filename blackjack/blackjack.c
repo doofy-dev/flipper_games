@@ -12,7 +12,6 @@
 
 #include "blackjack_icons.h"
 
-#define STARTING_MONEY 200
 #define DEALER_MAX 17
 
 void start_round(GameState *game_state);
@@ -68,13 +67,13 @@ Card draw_card(GameState *game_state) {
     return c;
 }
 
-char *letters[4] = {"spade", "hearth", "diamond", "club"};
 
 void drawPlayerCard(GameState *game_state) {
     Card c = draw_card(game_state);
     game_state->player_cards[game_state->player_card_count] = c;
     game_state->player_card_count++;
-    if (game_state->selectedMenu == 0 && (game_state->player_score < ROUND_PRICE || game_state->doubled))
+    if (game_state->selectedMenu == 0 &&
+        (game_state->player_score < game_state->settings.round_price || game_state->doubled))
         game_state->selectedMenu = 1;
 }
 
@@ -82,43 +81,63 @@ void drawDealerCard(GameState *game_state) {
     Card c = draw_card(game_state);
     game_state->dealer_cards[game_state->dealer_card_count] = c;
     game_state->dealer_card_count++;
-    FURI_LOG_D(APP_NAME, "drawing dealer %s %i", letters[c.pip], c.character + 2);
 }
 //endregion
 
 //region queue callbacks
-void to_lose_state(const GameState *game_state, Canvas *const canvas) {
+void to_lose_state(const GameState *game_state, Canvas *const canvas, uint32_t duration, uint32_t margin) {
     UNUSED(game_state);
+    UNUSED(margin);
+    if (duration == 0)
+        return;
     popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "You lost");
 }
 
-void to_bust_state(const GameState *game_state, Canvas *const canvas) {
+void to_bust_state(const GameState *game_state, Canvas *const canvas, uint32_t duration, uint32_t margin) {
     UNUSED(game_state);
+    UNUSED(margin);
+    if (duration == 0)
+        return;
     popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "Busted!");
 }
 
-void to_draw_state(const GameState *game_state, Canvas *const canvas) {
+void to_draw_state(const GameState *game_state, Canvas *const canvas, uint32_t duration, uint32_t margin) {
     UNUSED(game_state);
+    UNUSED(margin);
+
+    if (duration == 0)
+        return;
     popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "Draw");
 }
 
-void to_dealer_turn(const GameState *game_state, Canvas *const canvas) {
+void to_dealer_turn(const GameState *game_state, Canvas *const canvas, uint32_t duration, uint32_t margin) {
     UNUSED(game_state);
+    UNUSED(margin);
+
+    if (duration == 0)
+        return;
     popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "Dealers turn");
 }
 
-void to_win_state(const GameState *game_state, Canvas *const canvas) {
+void to_win_state(const GameState *game_state, Canvas *const canvas, uint32_t duration, uint32_t margin) {
     UNUSED(game_state);
+    UNUSED(margin);
+
+    if (duration == 0)
+        return;
     popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "You win");
 }
 
-void to_start(const GameState *game_state, Canvas *const canvas) {
+void to_start(const GameState *game_state, Canvas *const canvas, uint32_t duration, uint32_t margin) {
     UNUSED(game_state);
+    UNUSED(margin);
+    if (duration == 0)
+        return;
     popup_frame(canvas);
     elements_multiline_text_aligned(canvas, 64, 22, AlignCenter, AlignCenter, "Round started");
 }
@@ -136,7 +155,7 @@ void start(GameState *game_state) {
 void draw(GameState *game_state) {
     game_state->player_score += game_state->bet;
     game_state->bet = 0;
-    queue(game_state, start, before_start, to_start);
+    queue(game_state, start, before_start, to_start, game_state->settings.message_duration, 0);
 }
 
 void game_over(GameState *game_state) {
@@ -146,17 +165,17 @@ void game_over(GameState *game_state) {
 void lose(GameState *game_state) {
     game_state->state = GameStatePlay;
     game_state->bet = 0;
-    if (game_state->player_score >= ROUND_PRICE)
-        queue(game_state, start, before_start, to_start);
+    if (game_state->player_score >= game_state->settings.round_price)
+        queue(game_state, start, before_start, to_start, game_state->settings.message_duration, 0);
     else
-        queue(game_state, game_over, NULL, NULL);
+        queue(game_state, game_over, NULL, NULL, 0, 0);
 }
 
 void win(GameState *game_state) {
     game_state->state = GameStatePlay;
     game_state->player_score += game_state->bet * 2;
     game_state->bet = 0;
-    queue(game_state, start, before_start, to_start);
+    queue(game_state, start, before_start, to_start, game_state->settings.message_duration, 0);
 }
 
 
@@ -164,8 +183,9 @@ void dealerTurn(GameState *game_state) {
     game_state->state = GameStateDealer;
 }
 
-void dealer_card_animation(const GameState *game_state, Canvas *const canvas) {
-    float t = (float) (furi_get_tick() - game_state->animationStart) / (ANIMATION_TIME - ANIMATION_END_MARGIN);
+void dealer_card_animation(const GameState *game_state, Canvas *const canvas, uint32_t duration, uint32_t margin) {
+    float t = (float) (furi_get_tick() - game_state->animationStart) / (duration - margin);
+
     Card animatingCard = game_state->deck.cards[game_state->deck.index];
     if (game_state->dealer_card_count > 1) {
         Vector end = card_pos_at_index(game_state->dealer_card_count);
@@ -190,14 +210,14 @@ void dealer_card_animation(const GameState *game_state, Canvas *const canvas) {
     }
 }
 
-void dealer_back_card_animation(const GameState *game_state, Canvas *const canvas) {
-    float t = (float) (furi_get_tick() - game_state->animationStart) / (ANIMATION_TIME - ANIMATION_END_MARGIN);
+void dealer_back_card_animation(const GameState *game_state, Canvas *const canvas, uint32_t duration, uint32_t margin) {
+    float t = (float) (furi_get_tick() - game_state->animationStart) / (duration - margin);
     Vector currentPos = quadratic_2d((Vector) {32, -CARD_HEIGHT}, (Vector) {64, 32}, (Vector) {13, 5}, t);
     drawCardBackAt(currentPos.x, currentPos.y, canvas);
 }
 
-void player_card_animation(const GameState *game_state, Canvas *const canvas) {
-    float t = (float) (furi_get_tick() - game_state->animationStart) / (ANIMATION_TIME - ANIMATION_END_MARGIN);
+void player_card_animation(const GameState *game_state, Canvas *const canvas, uint32_t duration, uint32_t margin) {
+    float t = (float) (furi_get_tick() - game_state->animationStart) / (duration - margin);
     Card animatingCard = game_state->deck.cards[game_state->deck.index];
     Vector end = card_pos_at_index(game_state->player_card_count);
     if (!is_at_edge(game_state->player_card_count))
@@ -216,12 +236,12 @@ void player_card_animation(const GameState *game_state, Canvas *const canvas) {
 void player_tick(GameState *game_state) {
     uint8_t score = handCount(game_state->player_cards, game_state->player_card_count);
     if ((game_state->doubled && score <= 21) || score == 21) {
-        queue(game_state, dealerTurn, NULL, NULL);
+        queue(game_state, dealerTurn, NULL, NULL, game_state->settings.message_duration, 0);
     } else if (score > 21) {
-        queue(game_state, lose, NULL, to_bust_state);
+        queue(game_state, lose, NULL, to_bust_state, game_state->settings.message_duration, 0);
     } else {
         if (game_state->selectDirection == DirectionUp && game_state->selectedMenu > 0 &&
-            game_state->player_score >= ROUND_PRICE && !game_state->doubled) {
+            game_state->player_score >= game_state->settings.round_price && !game_state->doubled) {
             game_state->selectedMenu--;
         }
         if (game_state->selectDirection == DirectionDown && game_state->selectedMenu < 2) {
@@ -230,26 +250,28 @@ void player_tick(GameState *game_state) {
         if (game_state->selectDirection == Select) {
             //double
             if (!game_state->doubled && game_state->selectedMenu == 0 &&
-                game_state->player_score >= ROUND_PRICE) {
+                game_state->player_score >= game_state->settings.round_price) {
 
-                game_state->player_score -= ROUND_PRICE;
-                game_state->bet += ROUND_PRICE;
+                game_state->player_score -= game_state->settings.round_price;
+                game_state->bet += game_state->settings.round_price;
                 game_state->doubled = true;
                 game_state->selectedMenu = 1;
-                queue(game_state, drawPlayerCard, NULL, player_card_animation);
+                queue(game_state, drawPlayerCard, NULL, player_card_animation, game_state->settings.animation_duration,
+                      game_state->settings.animation_margin);
                 game_state->player_cards[game_state->player_card_count] = game_state->deck.cards[game_state->deck.index];
                 score = handCount(game_state->player_cards, game_state->player_card_count + 1);
                 if (score > 21)
-                    queue(game_state, lose, NULL, to_bust_state);
+                    queue(game_state, lose, NULL, to_bust_state, game_state->settings.message_duration, 0);
                 else
-                    queue(game_state, dealerTurn, NULL, to_dealer_turn);
+                    queue(game_state, dealerTurn, NULL, to_dealer_turn, game_state->settings.message_duration, 0);
 
             } //hit
             else if (game_state->selectedMenu == 1) {
-                queue(game_state, drawPlayerCard, NULL, player_card_animation);
+                queue(game_state, drawPlayerCard, NULL, player_card_animation, game_state->settings.animation_duration,
+                      game_state->settings.animation_margin);
             } //stay
             else if (game_state->selectedMenu == 2) {
-                queue(game_state, dealerTurn, NULL, to_dealer_turn);
+                queue(game_state, dealerTurn, NULL, to_dealer_turn, game_state->settings.message_duration, 0);
             }
         }
     }
@@ -261,13 +283,14 @@ void dealer_tick(GameState *game_state) {
 
     if (dealer_score >= DEALER_MAX) {
         if (dealer_score > 21 || dealer_score < player_score)
-            queue(game_state, win, NULL, to_win_state);
+            queue(game_state, win, NULL, to_win_state, game_state->settings.message_duration, 0);
         else if (dealer_score > player_score)
-            queue(game_state, lose, NULL, to_lose_state);
+            queue(game_state, lose, NULL, to_lose_state, game_state->settings.message_duration, 0);
         else if (dealer_score == player_score)
-            queue(game_state, draw, NULL, to_draw_state);
+            queue(game_state, draw, NULL, to_draw_state, game_state->settings.message_duration, 0);
     } else {
-        queue(game_state, drawDealerCard, NULL, dealer_card_animation);
+        queue(game_state, drawDealerCard, NULL, dealer_card_animation, game_state->settings.animation_duration,
+              game_state->settings.animation_margin);
     }
 }
 
@@ -288,7 +311,7 @@ void settings_tick(GameState *game_state) {
                     nextScore -= 10;
                 else
                     nextScore += 10;
-                if (nextScore >= (int)game_state->settings.round_price && nextScore < 400)
+                if (nextScore >= (int) game_state->settings.round_price && nextScore < 400)
                     game_state->settings.starting_money = nextScore;
                 break;
             case 1:
@@ -297,7 +320,7 @@ void settings_tick(GameState *game_state) {
                     nextScore -= 10;
                 else
                     nextScore += 10;
-                if (nextScore >= 5 && nextScore <= (int)game_state->settings.starting_money)
+                if (nextScore >= 5 && nextScore <= (int) game_state->settings.starting_money)
                     game_state->settings.round_price = nextScore;
                 break;
             case 2:
@@ -306,7 +329,7 @@ void settings_tick(GameState *game_state) {
                     nextScore -= 100;
                 else
                     nextScore += 100;
-                if (nextScore >= 0 && nextScore < (int)game_state->settings.animation_duration)
+                if (nextScore >= 0 && nextScore <= (int) game_state->settings.animation_duration)
                     game_state->settings.animation_margin = nextScore;
                 break;
             case 3:
@@ -315,7 +338,7 @@ void settings_tick(GameState *game_state) {
                     nextScore -= 100;
                 else
                     nextScore += 100;
-                if (nextScore >= (int)game_state->settings.animation_margin && nextScore < 2000)
+                if (nextScore >= (int) game_state->settings.animation_margin && nextScore < 2000)
                     game_state->settings.animation_duration = nextScore;
                 break;
             case 4:
@@ -354,10 +377,14 @@ void tick(GameState *game_state) {
             if (!game_state->started) {
                 game_state->selectedMenu = 0;
                 game_state->started = true;
-                queue(game_state, drawDealerCard, NULL, dealer_back_card_animation);
-                queue(game_state, drawPlayerCard, NULL, player_card_animation);
-                queue(game_state, drawDealerCard, NULL, dealer_card_animation);
-                queue(game_state, drawPlayerCard, NULL, player_card_animation);
+                queue(game_state, drawDealerCard, NULL, dealer_back_card_animation,
+                      game_state->settings.animation_duration, game_state->settings.animation_margin);
+                queue(game_state, drawPlayerCard, NULL, player_card_animation, game_state->settings.animation_duration,
+                      game_state->settings.animation_margin);
+                queue(game_state, drawDealerCard, NULL, dealer_card_animation, game_state->settings.animation_duration,
+                      game_state->settings.animation_margin);
+                queue(game_state, drawPlayerCard, NULL, player_card_animation, game_state->settings.animation_duration,
+                      game_state->settings.animation_margin);
             }
             if (!queue_ran)
                 player_tick(game_state);
@@ -387,20 +414,20 @@ void start_round(GameState *game_state) {
     game_state->animationStart = 0;
     shuffleDeck(&(game_state->deck));
     game_state->doubled = false;
-    game_state->bet = ROUND_PRICE;
-    if (game_state->player_score < ROUND_PRICE) {
+    game_state->bet = game_state->settings.round_price;
+    if (game_state->player_score < game_state->settings.round_price) {
         game_state->state = GameStateGameOver;
     } else {
-        game_state->player_score -= ROUND_PRICE;
+        game_state->player_score -= game_state->settings.round_price;
     }
     game_state->state = GameStatePlay;
 }
 
 void init(GameState *game_state) {
+    game_state->settings = load_settings();
     game_state->last_tick = 0;
     game_state->processing = true;
-    game_state->player_score = STARTING_MONEY;
-    game_state->settings = load_settings();
+    game_state->player_score = game_state->settings.starting_money;
     generateDeck(&(game_state->deck));
     start_round(game_state);
 }
@@ -471,9 +498,8 @@ int32_t blackjack_app(void *p) {
                         case InputKeyBack:
                             if (game_state->state == GameStateSettings) {
                                 game_state->state = GameStateStart;
-                                save_settings(&(game_state->settings));
-                            }
-                            else
+                                save_settings(game_state->settings);
+                            } else
                                 processing = false;
                             break;
                         case InputKeyOk:
