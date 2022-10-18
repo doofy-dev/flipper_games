@@ -1,7 +1,6 @@
 #pragma once
 
 #include "defines.h"
-#include "util.h"
 #include <gui/gui.h>
 
 void draw_player_scene(Canvas *const canvas, const GameState *game_state);
