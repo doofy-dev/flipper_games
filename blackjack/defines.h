@@ -7,6 +7,7 @@
 #include <flipper_format/flipper_format_i.h>
 #include "common/card.h"
 #include "common/queue.h"
+#include "common/menu.h"
 
 #define APP_NAME "Blackjack"
 
@@ -62,13 +63,14 @@ typedef struct {
 
     uint32_t player_score;
     uint32_t bet;
+    uint8_t selectedMenu;
     bool doubled;
     bool started;
-    uint8_t selectedMenu;
     bool processing;
     Deck deck;
     PlayState state;
     QueueState queue_state;
+    Menu *menu;
     unsigned int last_tick;
 } GameState;
 
