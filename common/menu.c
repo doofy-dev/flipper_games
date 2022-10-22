@@ -76,9 +76,9 @@ void render_menu(Menu *menu, Canvas *canvas, uint8_t pos_x, uint8_t pos_y) {
                             menu->items[menu->current_menu].name);
     //9*5
     int center = pos_x + menu->menu_width / 2;
-    for(uint8_t i=0;i<5;i++){
+    for(uint8_t i=0;i<4;i++){
         for(int8_t j = -i; j<=i;j++){
-            canvas_draw_dot(canvas, center+j, pos_y-5+i);
+            canvas_draw_dot(canvas, center+j, pos_y-4+i);
             canvas_draw_dot(canvas, center+j, pos_y+14-i);
         }
     }
