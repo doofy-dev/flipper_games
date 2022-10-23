@@ -26,6 +26,7 @@ void set_menu_state(Menu *menu, uint8_t index, bool state) {
 }
 
 void move_menu(Menu *menu, int8_t direction) {
+    if (!menu->enabled) return;
     int max = menu->menu_count;
     for (int8_t i = 0; i < max; i++) {
         FURI_LOG_D("MENU", "Iteration %i, current %i, direction %i, state %i", i, menu->current_menu,direction,menu->items[menu->current_menu].enabled?1:0);
@@ -45,6 +46,7 @@ void move_menu(Menu *menu, int8_t direction) {
 }
 
 void activate_menu(Menu *menu, void *state) {
+    if (!menu->enabled) return;
     menu->items[menu->current_menu].callback(state);
 }
 
@@ -83,7 +85,4 @@ void render_menu(Menu *menu, Canvas *canvas, uint8_t pos_x, uint8_t pos_y) {
         }
     }
 
-//
-//    canvas_draw_triangle(canvas, pos_x + menu->menu_width / 2, pos_y - 2, 5, 5, CanvasDirectionBottomToTop);
-//    canvas_draw_triangle(canvas, pos_x + menu->menu_width / 2, pos_y + 11, 5, 5, CanvasDirectionTopToBottom);
 }

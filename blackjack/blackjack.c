@@ -27,7 +27,7 @@ static void draw_ui(Canvas *const canvas, const GameState *game_state) {
     draw_score(canvas, true, hand_count(game_state->player_cards, game_state->player_card_count));
 
     if (!game_state->queue_state.running && game_state->state == GameStatePlay) {
-        render_menu(game_state->menu,canvas, 2, 46);
+        render_menu(game_state->menu,canvas, 2, 47);
     }
 }
 
@@ -217,7 +217,7 @@ void dealer_card_animation(const void *ctx, Canvas *const canvas) {
                             t,
                             false,
                             canvas);
-//        drawPlayerDeck(game_state->dealer_cards, game_state->dealer_card_count, canvas);
+//        draw_deck(game_state->dealer_cards, game_state->dealer_card_count, canvas);
     }
 }
 
@@ -226,7 +226,7 @@ void dealer_back_card_animation(const void *ctx, Canvas *const canvas) {
     float t = animationTime(game_state);
 
     Vector currentPos = quadratic_2d((Vector) {32, -CARD_HEIGHT}, (Vector) {64, 32}, (Vector) {13, 5}, t);
-    drawCardBackAt(currentPos.x, currentPos.y, canvas);
+    draw_card_back_at(currentPos.x, currentPos.y, canvas);
 }
 
 void player_card_animation(const void *ctx, Canvas *const canvas) {
@@ -243,7 +243,7 @@ void player_card_animation(const void *ctx, Canvas *const canvas) {
                         t,
                         true,
                         canvas);
-//    drawPlayerDeck(game_state->dealer_cards, game_state->player_card_count, canvas);
+//    draw_deck(game_state->dealer_cards, game_state->player_card_count, canvas);
 }
 //endregion
 
@@ -257,7 +257,7 @@ void player_tick(GameState *game_state) {
                 game_state->settings.message_duration);
     } else {
         if(game_state->selectDirection == DirectionUp || game_state->selectDirection == DirectionDown){
-            move_menu(game_state->menu, game_state->selectDirection == DirectionUp ? 1 : -1);
+            move_menu(game_state->menu, game_state->selectDirection == DirectionUp ? -1 : 1);
         }
 
         if (game_state->selectDirection == Select){
@@ -390,6 +390,7 @@ void tick(GameState *game_state) {
 }
 
 void start_round(GameState *game_state) {
+    game_state->menu->current_menu=1;
     game_state->player_card_count = 0;
     game_state->dealer_card_count = 0;
     set_menu_state(game_state->menu, 0, true);
@@ -397,7 +398,7 @@ void start_round(GameState *game_state) {
     game_state->started = false;
     game_state->doubled = false;
     game_state->queue_state.running = true;
-    shuffleDeck(&(game_state->deck));
+    shuffle_deck(&(game_state->deck));
     game_state->doubled = false;
     game_state->bet = game_state->settings.round_price;
     if (game_state->player_score < game_state->settings.round_price) {
@@ -417,7 +418,7 @@ void init(GameState *game_state) {
     game_state->processing = true;
     game_state->selectedMenu = 0;
     game_state->player_score = game_state->settings.starting_money;
-    generateDeck(&(game_state->deck));
+    generate_deck(&(game_state->deck), 6);
     start_round(game_state);
 }
 

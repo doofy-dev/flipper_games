@@ -86,7 +86,7 @@ bool get_pip_pixel(uint8_t pip, uint8_t x, uint8_t y) {
     return pips[pip][x + y * 7];
 }
 
-void drawCardAt(int8_t pos_x, int8_t pos_y, uint8_t pip, uint8_t character, Canvas *const canvas) {
+void draw_card_at(int8_t pos_x, int8_t pos_y, uint8_t pip, uint8_t character, Canvas *const canvas) {
     canvas_set_color(canvas, ColorWhite);
     canvas_draw_box(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
 
@@ -135,9 +135,9 @@ void drawCardAt(int8_t pos_x, int8_t pos_y, uint8_t pip, uint8_t character, Canv
     canvas_set_font_direction(canvas, CanvasDirectionLeftToRight);
 }
 
-void drawPlayerDeck(const Card *cards, uint8_t count, Canvas *const canvas) {
+void draw_deck(const Card *cards, uint8_t count, Canvas *const canvas) {
     for (int i = count-1; i >= 0; i--) {
-        drawCardAt(playerCardPositions[i][0], playerCardPositions[i][1], cards[i].pip, cards[i].character, canvas);
+        draw_card_at(playerCardPositions[i][0], playerCardPositions[i][1], cards[i].pip, cards[i].character, canvas);
     }
 }
 
@@ -148,7 +148,7 @@ Vector card_pos_at_index(uint8_t index) {
     };
 }
 
-void drawCardBackAt(int8_t pos_x, int8_t pos_y, Canvas *const canvas) {
+void draw_card_back_at(int8_t pos_x, int8_t pos_y, Canvas *const canvas) {
     canvas_set_color(canvas, ColorWhite);
     canvas_draw_box(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
 
@@ -163,9 +163,11 @@ void drawCardBackAt(int8_t pos_x, int8_t pos_y, Canvas *const canvas) {
     }
 }
 
-void generateDeck(Deck *deck_ptr) {
+void generate_deck(Deck *deck_ptr, uint8_t deck_count) {
     uint16_t counter = 0;
-    for (uint8_t deck = 0; deck < DECK_COUNT; deck++) {
+    deck_ptr->deck_count=deck_count;
+    deck_ptr->cards=malloc(sizeof(Card) * 52 * deck_count);
+    for (uint8_t deck = 0; deck < deck_count; deck++) {
         for (uint8_t pip = 0; pip < 4; pip++) {
             for (uint8_t label = 0; label < 13; label++) {
                 deck_ptr->cards[counter] = (Card)
@@ -178,10 +180,10 @@ void generateDeck(Deck *deck_ptr) {
     }
 }
 
-void shuffleDeck(Deck *deck_ptr) {
+void shuffle_deck(Deck *deck_ptr) {
     srand(DWT->CYCCNT);
     deck_ptr->index = 0;
-    int max = DECK_COUNT * 52;
+    int max = deck_ptr->deck_count * 52;
     for (int i = 0; i < max; i++) {
         int r = i + (rand() % (max - i));
         Card tmp = deck_ptr->cards[i];
@@ -222,17 +224,13 @@ void draw_card_animation(Card animatingCard, Vector from, Vector control, Vector
 
     Vector currentPos = quadratic_2d(from, control, to, time);
     if (t > 1) {
-        drawCardAt(currentPos.x, currentPos.y, animatingCard.pip,
+        draw_card_at(currentPos.x, currentPos.y, animatingCard.pip,
                    animatingCard.character, canvas);
     } else {
         if (t < 0.5)
-            drawCardBackAt(currentPos.x, currentPos.y, canvas);
+            draw_card_back_at(currentPos.x, currentPos.y, canvas);
         else
-            drawCardAt(currentPos.x, currentPos.y, animatingCard.pip,
+            draw_card_at(currentPos.x, currentPos.y, animatingCard.pip,
                        animatingCard.character, canvas);
     }
-}
-
-bool is_at_edge(uint8_t index) {
-    return index == 0 || index == 8 || index == 15;
 }
