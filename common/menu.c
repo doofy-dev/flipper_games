@@ -7,9 +7,10 @@ void add_menu(Menu *menu, const char *name, void (*callback)(void *)) {
     for (uint8_t i = 0; i < menu->menu_count; i++) {
         menu->items[i] = items[i];
     }
+    free(items);
+
     menu->items[menu->menu_count] = (MenuItem) {name, true, callback};
     menu->menu_count++;
-    free(items);
 }
 
 void free_menu(Menu *menu) {

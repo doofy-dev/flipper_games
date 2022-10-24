@@ -77,7 +77,8 @@ Settings load_settings() {
         if (!flipper_format_file_open_existing(file, CONFIG_FILE_PATH)) {
             FURI_LOG_E(APP_NAME, "Error opening existing file %s", CONFIG_FILE_PATH);
             flipper_format_file_close(file);
-        } else {
+        }
+        else {
             uint32_t value;
             bool valueBool;
             FURI_LOG_D(APP_NAME, "Checking version");
