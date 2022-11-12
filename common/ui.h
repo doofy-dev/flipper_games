@@ -12,8 +12,19 @@ typedef enum {
     Inverse
 } DrawMode;
 
+// max size is the screen size
+
+typedef struct {
+    uint8_t *data;
+    unsigned long iconId;
+} TileMap;
+
+uint8_t *image_data(Canvas *const canvas, const Icon *icon);
 
 uint32_t pixel_index(uint8_t x, uint8_t y);
+
+void draw_icon_clip(Canvas *const canvas, const Icon *icon, int16_t x, int16_t y, uint8_t left, uint8_t top, uint8_t w,
+                    uint8_t h, DrawMode drawMode);
 
 void draw_rounded_box(Canvas *const canvas, int16_t x, int16_t y, uint8_t w, uint8_t h, DrawMode drawMode);
 
@@ -30,3 +41,5 @@ void set_pixel(Canvas *const canvas, int16_t x, int16_t y, DrawMode draw_mode);
 void draw_line(Canvas *const canvas, int16_t x1, int16_t y1, int16_t x2, int16_t y2, DrawMode draw_mode);
 
 bool in_screen(int16_t x, int16_t y);
+
+void ui_cleanup();

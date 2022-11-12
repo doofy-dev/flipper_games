@@ -1,5 +1,6 @@
 #include "card.h"
 #include "dml.h"
+#include "ui.h"
 
 #define CORNER_MARGIN 3
 #define CARD_DRAW_X_START 108
@@ -87,11 +88,8 @@ bool get_pip_pixel(uint8_t pip, uint8_t x, uint8_t y) {
 }
 
 void draw_card_at(int8_t pos_x, int8_t pos_y, uint8_t pip, uint8_t character, Canvas *const canvas) {
-    canvas_set_color(canvas, ColorWhite);
-    canvas_draw_box(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
-
-    canvas_set_color(canvas, ColorBlack);
-    canvas_draw_frame(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
+    draw_rounded_box(canvas,pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT, White);
+    draw_rounded_box_frame(canvas,pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT, Black);
 
     uint8_t left = pos_x + CORNER_MARGIN;
     uint8_t right = (pos_x + CARD_WIDTH - CORNER_MARGIN - 7);

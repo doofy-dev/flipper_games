@@ -5,6 +5,7 @@
 #include "defines.h"
 #include "common/ui.h"
 #include <u8g2_glue.h>
+#include "solitaire_icons.h"
 
 
 int i=0;
@@ -27,6 +28,9 @@ static void render_callback(Canvas *const canvas, void *ctx) {
     canvas_draw_str(canvas, 55, 50, "Rounded invert");
     canvas_draw_str(canvas, 10, 40, "Custom shape");
 
+    draw_icon_clip(canvas, &I_card_grapics, 100,0, 0,0, 5,5, Black);
+    draw_icon_clip(canvas, &I_card_grapics, 100,10, 0,5, 5,5, Black);
+    draw_icon_clip(canvas, &I_card_grapics, 100,20, 0,10, 7,7, Black);
 
     if(i>50){
         //rounded shape
@@ -59,19 +63,6 @@ static void render_callback(Canvas *const canvas, void *ctx) {
 
         invert_rectangle(canvas, 43, 9, 20,12);
     }
-
-    //Read pixel
-//    FURI_LOG_D(APP_NAME, "pixel: %i", canvas->fb.tile_buf_ptr[0]);
-//
-//    canvas_set_color(canvas, ColorBlack);
-//    canvas_draw_dot(canvas, 0, 0);
-
-    //change pixel (X:10,Y:0) every 50 cycle
-//    canvas->fb.tile_buf_ptr[10] = i < 50 ? 1 : 0;
-
-    //read back pixel changed by the draw function
-//    FURI_LOG_D(APP_NAME, "pixel: %i", canvas->fb.tile_buf_ptr[0]);
-
 }
 
 void tick(GameState *game_state) {
@@ -178,6 +169,7 @@ int32_t solitaire_app(void *p) {
     delete_mutex(&state_mutex);
 
     free_and_exit:
+    ui_cleanup();
     for (uint8_t i = 0; i < 7; i++)
         free_hand(&(game_state->bottom_columns[i]));
     for (uint8_t i = 0; i < 4; i++)
@@ -187,6 +179,5 @@ int32_t solitaire_app(void *p) {
     queue_clear(&(game_state->queue_state));
     free(game_state);
     furi_message_queue_free(event_queue);
-
     return return_code;
 }
