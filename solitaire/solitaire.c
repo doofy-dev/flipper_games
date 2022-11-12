@@ -4,23 +4,40 @@
 #include <gui/canvas_i.h>
 #include "defines.h"
 #include "common/ui.h"
-#include <u8g2_glue.h>
 #include "solitaire_icons.h"
 
-
-int i=0;
 static void render_callback(Canvas *const canvas, void *ctx) {
     UNUSED(ctx);
-    i++;
-    if(i>100)
-        i=0;
 
+    draw_card_back_at(2, 0, canvas);
+    draw_card_space(110, 0, canvas);
+    draw_card_space(92, 0, canvas);
+    draw_card_space(74, 0, canvas);
+    draw_card_space(56, 0, canvas);
+
+
+    draw_card_space(2, 25, canvas);
+    draw_card_space(20, 25, canvas);
+    draw_card_space(38, 25, canvas);
+    draw_card_space(56, 25, canvas);
+    draw_card_space(74, 25, canvas);
+    draw_card_space(92, 25, canvas);
+    draw_card_space(110, 25, canvas);
+
+
+
+//    draw_rounded_box(canvas, 20,10,CARD_WIDTH,CARD_HEIGHT, Black);
+//    draw_rounded_box_frame(canvas, 22,12,CARD_WIDTH-4,CARD_HEIGHT-4, White);
+
+
+/*
     draw_rounded_box(canvas, 10,10,10,10, Black);
 
     draw_rounded_box(canvas, 22,10,10,10, White);
     draw_rounded_box_frame(canvas, 22,10,10,10, Black);
 
-    draw_rounded_box(canvas, 44,10,10,10, Black);
+    draw_rounded_box(canvas, 44,10,10,10, Black);*//*
+
 
     canvas_set_color(canvas, ColorBlack);
     canvas_draw_str(canvas, 56, 18, "Invert");
@@ -31,38 +48,8 @@ static void render_callback(Canvas *const canvas, void *ctx) {
     draw_icon_clip(canvas, &I_card_grapics, 100,0, 0,0, 5,5, Black);
     draw_icon_clip(canvas, &I_card_grapics, 100,10, 0,5, 5,5, Black);
     draw_icon_clip(canvas, &I_card_grapics, 100,20, 0,10, 7,7, Black);
+*/
 
-    if(i>50){
-        //rounded shape
-        draw_rounded_box(canvas, 70, 40, 20,20, Inverse);
-
-
-        //custom shape
-        uint8_t custom_shape[400]={
-                0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,
-                0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,
-                0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,
-                0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,
-                0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-                0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-                0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-                0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-                0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,
-                0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,
-                1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,
-                0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,0,
-                0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,
-                0,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,
-                0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,0,0,
-                0,0,0,0,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,
-                0,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,1,0,0,
-                0,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1,1,1,0,0,
-                0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,1,0,0,
-                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
-        invert_shape(canvas, custom_shape, 9, 30, 20,20);
-
-        invert_rectangle(canvas, 43, 9, 20,12);
-    }
 }
 
 void tick(GameState *game_state) {
@@ -115,6 +102,8 @@ int32_t solitaire_app(void *p) {
         return_code = 255;
         goto free_and_exit;
     }
+    set_card_graphics(&I_card_grapics);
+
     ViewPort *view_port = view_port_alloc();
     view_port_draw_callback_set(view_port, render_callback, &state_mutex);
     view_port_input_callback_set(view_port, input_callback, event_queue);

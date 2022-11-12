@@ -5,10 +5,8 @@
 #include <stdlib.h>
 #include "dml.h"
 
-#define CARD_HEIGHT 24
-#define CARD_HALF_HEIGHT CARD_HEIGHT/2
-#define CARD_WIDTH 18
-#define CARD_HALF_WIDTH CARD_WIDTH/2
+#define CARD_HEIGHT 23
+#define CARD_WIDTH 17
 
 //region types
 typedef struct {
@@ -29,6 +27,7 @@ typedef struct {
 } Hand;
 //endregion
 
+void set_card_graphics(const Icon* graphics);
 
 /**
  * Gets card coordinates at the index (range: 0-20).
@@ -124,3 +123,11 @@ void free_hand(Hand *hand_ptr);
  * @param card      Card to add
  */
 void add_to_hand(Hand *hand_ptr, Card card);
+
+/**
+ * Draw card placement position at coordinate
+ * @param pos_x     X coordinate
+ * @param pos_y     Y coordinate
+ * @param canvas    Canvas object
+ */
+void draw_card_space(int16_t pos_x, int16_t pos_y, Canvas *const canvas);

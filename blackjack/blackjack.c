@@ -478,6 +478,7 @@ int32_t blackjack_app(void *p) {
     add_menu(game_state->menu, "Double", doubleAction);
     add_menu(game_state->menu, "Hit", hitAction);
     add_menu(game_state->menu, "Stay", stayAction);
+    set_card_graphics(&I_card_grapics);
 
     game_state->state = GameStateStart;
 

@@ -12,7 +12,7 @@ typedef enum {
     Inverse
 } DrawMode;
 
-// max size is the screen size
+// size is the screen size
 
 typedef struct {
     uint8_t *data;
@@ -26,13 +26,20 @@ uint32_t pixel_index(uint8_t x, uint8_t y);
 void draw_icon_clip(Canvas *const canvas, const Icon *icon, int16_t x, int16_t y, uint8_t left, uint8_t top, uint8_t w,
                     uint8_t h, DrawMode drawMode);
 
+void draw_icon_clip_flipped(Canvas *const canvas, const Icon *icon, int16_t x, int16_t y, uint8_t left, uint8_t top, uint8_t w,
+                    uint8_t h, DrawMode drawMode);
+
 void draw_rounded_box(Canvas *const canvas, int16_t x, int16_t y, uint8_t w, uint8_t h, DrawMode drawMode);
 
 void draw_rounded_box_frame(Canvas *const canvas, int16_t x, int16_t y, uint8_t w, uint8_t h, DrawMode drawMode);
 
+void draw_rectangle(Canvas *const canvas, int16_t x, int16_t y, uint8_t w, uint8_t h, DrawMode drawMode);
+
 void invert_rectangle(Canvas *const canvas, int16_t x, int16_t y, uint8_t w, uint8_t h);
 
 void invert_shape(Canvas *const canvas, uint8_t *data, int16_t x, int16_t y, uint8_t w, uint8_t h);
+
+void draw_pixels(Canvas *const canvas, uint8_t *data, int16_t x, int16_t y, uint8_t w, uint8_t h, DrawMode drawMode);
 
 bool read_pixel(Canvas *const canvas, int16_t x, int16_t y);
 
