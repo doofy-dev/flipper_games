@@ -165,8 +165,8 @@ void draw_card_back_at(int8_t pos_x, int8_t pos_y, Canvas *const canvas) {
 
 void generate_deck(Deck *deck_ptr, uint8_t deck_count) {
     uint16_t counter = 0;
-    deck_ptr->deck_count=deck_count;
-    deck_ptr->cards=malloc(sizeof(Card) * 52 * deck_count);
+    deck_ptr->deck_count = deck_count;
+    deck_ptr->cards = malloc(sizeof(Card) * 52 * deck_count);
     for (uint8_t deck = 0; deck < deck_count; deck++) {
         for (uint8_t pip = 0; pip < 4; pip++) {
             for (uint8_t label = 0; label < 13; label++) {
@@ -225,12 +225,29 @@ void draw_card_animation(Card animatingCard, Vector from, Vector control, Vector
     Vector currentPos = quadratic_2d(from, control, to, time);
     if (t > 1) {
         draw_card_at(currentPos.x, currentPos.y, animatingCard.pip,
-                   animatingCard.character, canvas);
+                     animatingCard.character, canvas);
     } else {
         if (t < 0.5)
             draw_card_back_at(currentPos.x, currentPos.y, canvas);
         else
             draw_card_at(currentPos.x, currentPos.y, animatingCard.pip,
-                       animatingCard.character, canvas);
+                         animatingCard.character, canvas);
+    }
+}
+
+void init_hand(Hand *hand_ptr, uint8_t count) {
+    hand_ptr->cards = malloc(sizeof(Card) * count);
+    hand_ptr->index = 0;
+    hand_ptr->max = count;
+}
+
+void free_hand(Hand *hand_ptr) {
+    free(hand_ptr->cards);
+}
+
+void add_to_hand(Hand *hand_ptr, Card card) {
+    if (hand_ptr->index < hand_ptr->max) {
+        hand_ptr->cards[hand_ptr->index] = card;
+        hand_ptr->index++;
     }
 }

@@ -21,6 +21,12 @@ typedef struct {
     Card *cards;            //Cards in the deck
     int index;              //Card index (to know where we at in the deck)
 } Deck;
+
+typedef struct {
+    Card *cards;            //Cards in the deck
+    uint8_t index;          //Current index
+    uint8_t max;            //How many cards we want to store
+} Hand;
 //endregion
 
 
@@ -98,3 +104,23 @@ uint8_t hand_count(const Card *cards, uint8_t count);
  */
 void draw_card_animation(Card animatingCard, Vector from, Vector control, Vector to, float t, bool extra_margin,
                                 Canvas *const canvas);
+
+/**
+ * Init hand pointer
+ * @param hand_ptr   Pointer to hand
+ * @param count      Number of cards we want to store
+ */
+void init_hand(Hand *hand_ptr, uint8_t count);
+
+/**
+ * Free hand resources
+ * @param hand_ptr  Pointer to hand
+ */
+void free_hand(Hand *hand_ptr);
+
+/**
+ * Add card to hand
+ * @param hand_ptr  Pointer to hand
+ * @param card      Card to add
+ */
+void add_to_hand(Hand *hand_ptr, Card card);

@@ -55,9 +55,9 @@ for f in blackjack solitaire; do
     rm -r -f firmware/unleashed/applications_user/$f
     cp -R $f firmware/unleashed/applications_user/$f
     cp -R common firmware/unleashed/applications_user/$f/common
-
     build_app unleashed fap_$f
-  fi
+    cp firmware/unleashed/build/f7-firmware-D/.extapps/$f.fap builds/unleashed_$f.fap
+fi
   if [ "$VANILLA" -gt 0 ]; then
     echo "\n\n\e[0;32mBuilding app '$f' for vanilla\e[0m\n\n"
 
@@ -65,6 +65,8 @@ for f in blackjack solitaire; do
     cp -R $f firmware/official/applications_user/$f
     cp -R common firmware/official/applications_user/$f/common
     build_app official fap_$f
+    cp firmware/official/build/f7-firmware-D/.extapps/$f.fap builds/vanilla_$f.fap
+
   fi
 done
 cd

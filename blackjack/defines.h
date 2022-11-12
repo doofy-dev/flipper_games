@@ -45,10 +45,11 @@ typedef enum {
 
 typedef enum {
     DirectionUp,
-    DirectionRight,
     DirectionDown,
+    DirectionRight,
     DirectionLeft,
     Select,
+    Back,
     None
 } Direction;
 

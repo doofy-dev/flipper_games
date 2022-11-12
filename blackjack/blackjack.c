@@ -217,7 +217,6 @@ void dealer_card_animation(const void *ctx, Canvas *const canvas) {
                             t,
                             false,
                             canvas);
-//        draw_deck(game_state->dealer_cards, game_state->dealer_card_count, canvas);
     }
 }
 
@@ -243,7 +242,6 @@ void player_card_animation(const void *ctx, Canvas *const canvas) {
                         t,
                         true,
                         canvas);
-//    draw_deck(game_state->dealer_cards, game_state->player_card_count, canvas);
 }
 //endregion
 
@@ -558,6 +556,7 @@ int32_t blackjack_app(void *p) {
     delete_mutex(&state_mutex);
 
     free_and_exit:
+    free(game_state->deck.cards);
     free_menu(game_state->menu);
     queue_clear(&(game_state->queue_state));
     free(game_state);
