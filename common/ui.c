@@ -57,13 +57,16 @@ unsigned unsetBit(uint8_t x, uint8_t bit) {
     return x & ~(1 << bit);
 }
 
+bool test_pixel(uint8_t *data, uint8_t x, uint8_t y, uint8_t w) {
+    uint8_t current_bit = (y % 8);
+    uint8_t current_row = ((y - current_bit) / 8);
+    uint8_t current_value = data[current_row * w + x];
+    return current_value & (1 << current_bit);
+}
+
 bool read_pixel(Canvas *const canvas, int16_t x, int16_t y) {
     if (in_screen(x, y)) {
-        uint8_t current_bit = (y % 8);
-        uint8_t current_row = ((y - current_bit) / 8);
-        uint32_t i = pixel_index(x, current_row);
-        uint8_t current_value = canvas->fb.tile_buf_ptr[i];
-        return current_value & (1 << current_bit);
+        return test_pixel(canvas->fb.tile_buf_ptr, x, y, SCREEN_WIDTH);
     }
     return false;
 }
@@ -88,8 +91,8 @@ void set_pixel(Canvas *const canvas, int16_t x, int16_t y, DrawMode draw_mode) {
 }
 
 void draw_line(Canvas *const canvas, int16_t x1, int16_t y1, int16_t x2, int16_t y2, DrawMode draw_mode) {
-    for (int16_t x = x1; x <= x2; x++) {
-        for (int16_t y = y1; y <= y2; y++) {
+    for (int16_t x = x2; x >= x1; x--) {
+        for (int16_t y = y2; y >= y1; y--) {
             set_pixel(canvas, x, y, draw_mode);
         }
     }
@@ -108,23 +111,13 @@ void draw_rounded_box_frame(Canvas *const canvas, int16_t x, int16_t y, uint8_t 
     draw_line(canvas, xMax, yMinCorner, xMax, yMaxCorner, draw_mode);
 }
 
-void draw_rounded_box(Canvas *const canvas, int16_t x, int16_t y, uint8_t w, uint8_t h, DrawMode drawMode) {
-    for (int16_t o = 0; o < w; o++) {
-        for (int16_t p = 0; p < h; p++) {
-            int16_t curr_x = x + o;
-            int16_t curr_y = y + p;
-            if (in_screen(curr_x, curr_y)) {
-                if (
-                        (o == 0 && p == 0) ||
-                        (o == 0 && p == h - 1) ||
-                        (o == w - 1 && p == 0) ||
-                        (o == w - 1 && p == h - 1)
-                        )
-                    continue;
-                set_pixel(canvas, curr_x, curr_y, drawMode);
-            }
+void draw_rounded_box(Canvas *const canvas, int16_t x, int16_t y, uint8_t w, uint8_t h, DrawMode draw_mode) {
+    for (int16_t o = w - 2; o >= 1; o--) {
+        for (int16_t p = h - 2; p >= 1; p--) {
+            set_pixel(canvas, x + o, y + p, draw_mode);
         }
     }
+    draw_rounded_box_frame(canvas, x, y, w, h, draw_mode);
 }
 
 void invert_shape(Canvas *const canvas, uint8_t *data, int16_t x, int16_t y, uint8_t w, uint8_t h) {
@@ -174,18 +167,15 @@ uint8_t *getOrAddIconData(Canvas *const canvas, const Icon *icon) {
 
 void draw_icon_clip(Canvas *const canvas, const Icon *icon, int16_t x, int16_t y, uint8_t left, uint8_t top, uint8_t w,
                     uint8_t h, DrawMode drawMode) {
-
     uint8_t *icon_data = getOrAddIconData(canvas, icon);
 
     for (int i = 0; i < w; i++) {
         for (int j = 0; j < h; j++) {
-            uint8_t cy = top + j;
-
-            uint8_t current_bit = (cy % 8);
-            uint8_t current_row = ((cy - current_bit) / 8);
-            uint8_t cx = left + i;
-            uint8_t current_value = icon_data[current_row * SCREEN_WIDTH + cx];
-            if (current_value & (1 << current_bit))
+            bool on=test_pixel(icon_data, left + i, top + j, SCREEN_WIDTH);
+            if (drawMode == Filled) {
+                set_pixel(canvas, x + i, y + j, on ? Black : White );
+            }
+            else if (on)
                 set_pixel(canvas, x + i, y + j, drawMode);
         }
     }
@@ -194,18 +184,16 @@ void draw_icon_clip(Canvas *const canvas, const Icon *icon, int16_t x, int16_t y
 void draw_icon_clip_flipped(Canvas *const canvas, const Icon *icon, int16_t x, int16_t y, uint8_t left, uint8_t top,
                             uint8_t w,
                             uint8_t h, DrawMode drawMode) {
-
     uint8_t *icon_data = getOrAddIconData(canvas, icon);
 
     for (int i = 0; i < w; i++) {
         for (int j = 0; j < h; j++) {
-            uint8_t cy = top + j;
-            uint8_t current_bit = (cy % 8);
-            uint8_t current_row = ((cy - current_bit) / 8);
-            uint8_t cx = left + i;
-            uint8_t current_value = icon_data[current_row * SCREEN_WIDTH + cx];
-            if (current_value & (1 << current_bit))
-                set_pixel(canvas, x + w-i-1, y + h-j-1, drawMode);
+            bool on=test_pixel(icon_data, left + i, top + j, SCREEN_WIDTH);
+
+            if (drawMode == Filled) {
+                set_pixel(canvas, x + w - i - 1, y + h - j - 1, on ? Black : White);
+            } else if (on)
+                set_pixel(canvas, x + w - i - 1, y + h - j - 1, drawMode);
         }
     }
 }

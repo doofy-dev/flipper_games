@@ -9,7 +9,8 @@
 typedef enum {
     Black,
     White,
-    Inverse
+    Inverse,
+    Filled  //Currently only for Icon clip drawing
 } DrawMode;
 
 // size is the screen size
@@ -18,6 +19,8 @@ typedef struct {
     uint8_t *data;
     unsigned long iconId;
 } TileMap;
+
+bool test_pixel(uint8_t *data, uint8_t x, uint8_t y, uint8_t w);
 
 uint8_t *image_data(Canvas *const canvas, const Icon *icon);
 

@@ -29,6 +29,12 @@ if [ "$build" = "all" ]; then
   VANILLA=1
   UNLEASHED=1
 fi
+if [ "$build" = "clean" ]; then
+  printf '\n\n\e[31m%s\e[0m\n\n' "Cleaning build files"
+  rm -r firmware/official/build
+  rm -r firmware/unleashed/build
+  exit 0
+fi
 
 if [ "$game" != "all" ]; then
   declare -g games="$game"

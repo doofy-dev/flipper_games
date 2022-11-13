@@ -9,26 +9,26 @@
 #define CARD_DRAW_X_OFFSET 4
 #define CARD_DRAW_FIRST_ROW_LENGTH 7
 
-uint8_t pips[4][4] = {
-        {21, 10, 7, 7},    //spades
-        {7,  10, 7, 7},     //hearts
-        {0,  10, 7, 7},     //diamonds
-        {14, 10, 7, 7},     //clubs
+uint8_t pips[4][3] = {
+        {21, 10, 7},    //spades
+        {7,  10, 7},     //hearts
+        {0,  10, 7},     //diamonds
+        {14, 10, 7},     //clubs
 };
-uint8_t letters[13][4] = {
-        {0,  0, 5, 5},
-        {5,  0, 5, 5},
-        {10, 0, 5, 5},
-        {15, 0, 5, 5},
-        {20, 0, 5, 5},
-        {25, 0, 5, 5},
-        {30, 0, 5, 5},
-        {0,  5, 5, 5},
-        {5,  5, 5, 5},
-        {10, 5, 5, 5},
-        {15, 5, 5, 5},
-        {20, 5, 5, 5},
-        {25, 5, 5, 5},
+uint8_t letters[13][3] = {
+        {0,  0, 5},
+        {5,  0, 5},
+        {10, 0, 5},
+        {15, 0, 5},
+        {20, 0, 5},
+        {25, 0, 5},
+        {30, 0, 5},
+        {0,  5, 5},
+        {5,  5, 5},
+        {10, 5, 5},
+        {15, 5, 5},
+        {20, 5, 5},
+        {25, 5, 5},
 };
 uint8_t card_back[4] = {28, 10, 7, 7};
 
@@ -66,29 +66,41 @@ void set_card_graphics(const Icon *graphics) {
     card_graphics = (Icon *) graphics;
 }
 
-void draw_card_at(int8_t pos_x, int8_t pos_y, uint8_t pip, uint8_t character, Canvas *const canvas) {
-    draw_rounded_box(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT, White);
+void
+draw_card_at_colored(int8_t pos_x, int8_t pos_y, uint8_t pip, uint8_t character, bool inverted, Canvas *const canvas) {
+    DrawMode primary = inverted ? Black : White;
+    DrawMode secondary = inverted ? White : Black;
+    draw_rounded_box(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT, primary);
     draw_rounded_box_frame(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT, Black);
 
     uint8_t *drawInfo = pips[pip];
-    uint8_t left = pos_x + 2;
-    uint8_t right = (pos_x + CARD_WIDTH - drawInfo[2] - 2);
-    uint8_t top = pos_y + 2;
-    uint8_t bottom = (pos_y + CARD_HEIGHT - drawInfo[3] - 2);
+    uint8_t px = drawInfo[0], py = drawInfo[1], s = drawInfo[2];
 
-    draw_icon_clip(canvas, card_graphics, right, top, drawInfo[0], drawInfo[1], drawInfo[2], drawInfo[3], Black);
-    draw_icon_clip_flipped(canvas, card_graphics, left, bottom, drawInfo[0], drawInfo[1], drawInfo[2], drawInfo[3],
-                           Black);
+    uint8_t left = pos_x + 2;
+    uint8_t right = (pos_x + CARD_WIDTH - s - 2);
+    uint8_t top = pos_y + 2;
+    uint8_t bottom = (pos_y + CARD_HEIGHT - s - 2);
+
+    draw_icon_clip(canvas, card_graphics, right, top, px, py, s, s,
+                   secondary);
+    draw_icon_clip_flipped(canvas, card_graphics, left, bottom, px, py, s, s,
+                           secondary);
 
     drawInfo = letters[character];
+    px = drawInfo[0], py = drawInfo[1], s = drawInfo[2];
     left = pos_x + 2;
-    right = (pos_x + CARD_WIDTH - drawInfo[2] - 2);
+    right = (pos_x + CARD_WIDTH - s - 2);
     top = pos_y + 2;
-    bottom = (pos_y + CARD_HEIGHT - drawInfo[3] - 2);
+    bottom = (pos_y + CARD_HEIGHT - s - 2);
 
-    draw_icon_clip(canvas, card_graphics, left, top + 1, drawInfo[0], drawInfo[1], drawInfo[2], drawInfo[3], Black);
-    draw_icon_clip_flipped(canvas, card_graphics, right, bottom - 1, drawInfo[0], drawInfo[1], drawInfo[2], drawInfo[3],
-                           Black);
+    draw_icon_clip(canvas, card_graphics, left, top + 1, px, py, s, s,
+                   secondary);
+    draw_icon_clip_flipped(canvas, card_graphics, right, bottom - 1, px, py, s, s,
+                           secondary);
+}
+
+void draw_card_at(int8_t pos_x, int8_t pos_y, uint8_t pip, uint8_t character, Canvas *const canvas) {
+    draw_card_at_colored(pos_x, pos_y, pip, character, false, canvas);
 }
 
 void draw_deck(const Card *cards, uint8_t count, Canvas *const canvas) {
@@ -107,20 +119,22 @@ Vector card_pos_at_index(uint8_t index) {
 void draw_card_back_at(int8_t pos_x, int8_t pos_y, Canvas *const canvas) {
     draw_rounded_box(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT, White);
     draw_rounded_box_frame(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT, Black);
-
+    uint8_t p_x = card_back[0];
+    uint8_t p_y = card_back[1];
     uint8_t _x = card_back[2];
     uint8_t _y = card_back[3];
+
     for (uint8_t x = 0; x < CARD_WIDTH; x += card_back[2]) {
         _x = card_back[2];
         _y = card_back[3];
         if ((x + _x) > CARD_WIDTH - 2)
             _x = CARD_WIDTH - x - 2;
 
-        for (uint8_t y = 0; y < CARD_HEIGHT - card_back[3]; y += card_back[3]) {
+        for (uint8_t y = 0; y < CARD_HEIGHT - _y; y += _y) {
             if ((y + _y) > CARD_HEIGHT - 2)
                 _y = CARD_HEIGHT - y - 2;
 
-            draw_icon_clip(canvas, card_graphics, pos_x + x + 1, pos_y + y + 1, card_back[0], card_back[1], _x, _y,
+            draw_icon_clip(canvas, card_graphics, pos_x + x + 1, pos_y + y + 1, p_x, p_y, _x, _y,
                            Black);
         }
     }
@@ -129,13 +143,14 @@ void draw_card_back_at(int8_t pos_x, int8_t pos_y, Canvas *const canvas) {
 void generate_deck(Deck *deck_ptr, uint8_t deck_count) {
     uint16_t counter = 0;
     deck_ptr->deck_count = deck_count;
+    deck_ptr->card_count = deck_count * 52;
     deck_ptr->cards = malloc(sizeof(Card) * 52 * deck_count);
     for (uint8_t deck = 0; deck < deck_count; deck++) {
         for (uint8_t pip = 0; pip < 4; pip++) {
             for (uint8_t label = 0; label < 13; label++) {
                 deck_ptr->cards[counter] = (Card)
                         {
-                                pip, label
+                                pip, label, false, false
                         };
                 counter++;
             }
@@ -215,7 +230,80 @@ void add_to_hand(Hand *hand_ptr, Card card) {
     }
 }
 
-void draw_card_space(int16_t pos_x, int16_t pos_y, Canvas *const canvas) {
-    draw_rounded_box(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT, Black);
-    draw_rounded_box_frame(canvas, pos_x+2, pos_y+2, CARD_WIDTH - 4, CARD_HEIGHT - 4, White);
+void draw_card_space(int16_t pos_x, int16_t pos_y, bool highlighted, Canvas *const canvas) {
+    if (highlighted) {
+        draw_rounded_box_frame(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT, Black);
+        draw_rounded_box_frame(canvas, pos_x + 2, pos_y + 2, CARD_WIDTH - 4, CARD_HEIGHT - 4, White);
+    } else {
+        draw_rounded_box(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT, Black);
+        draw_rounded_box_frame(canvas, pos_x + 2, pos_y + 2, CARD_WIDTH - 4, CARD_HEIGHT - 4, White);
+    }
+}
+
+int first_non_flipped_card(Hand hand) {
+    for (int i = 0; i < hand.index; i++) {
+        if (!hand.cards[i].flipped) {
+            return i;
+        }
+    }
+    return hand.index;
+}
+
+void
+draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, uint8_t max_cards, bool highlightedTop, bool highlightedBottom, Canvas *const canvas) {
+    if (hand.index == 0) {
+        draw_card_space(pos_x, pos_y, highlightedTop||highlightedBottom, canvas);
+        return;
+    }
+    int count = max(hand.index - max_cards, 0);
+//    int first_non_flipped = first_non_flipped_card(hand);
+
+//    if (first_non_flipped < count)
+
+        for (int i = count, pos = 0; i < min(count + max_cards, hand.index); i++, pos++) {
+            if (hand.cards[i].flipped) {
+                draw_card_back_at(pos_x, pos_y + pos * 4, canvas);
+            } else {
+                draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[i].pip, hand.cards[i].character, highlightedBottom,
+                                     canvas);
+            }
+        }
+}
+
+Card remove_from_deck(uint16_t index, Deck *deck) {
+    Card result = {0, 0, true, false};
+    if (deck->card_count > 0) {
+        deck->card_count--;
+        Card *cards = deck->cards;
+        deck->cards = malloc(sizeof(Card) * (deck->card_count - 1));
+        for (int i = 0, curr_index = 0; i < deck->card_count; i++) {
+            if (i != index) {
+                deck->cards[curr_index] = cards[i];
+                curr_index++;
+            } else {
+                result = cards[i];
+            }
+        }
+        if (deck->index >= deck->card_count) {
+            deck->index--;
+        }
+    }
+    return result;
+}
+
+void extract_hand_region(Hand *hand, Hand *to, uint8_t start_index) {
+    if (start_index >= hand->index) return;
+
+    for (uint8_t i = start_index; i < hand->index; i++) {
+        add_to_hand(to, hand->cards[i]);
+    }
+    hand->index = start_index;
+}
+
+void add_hand_region(Hand *to, Hand *from) {
+    if ((to->index + from->index) <= to->max) {
+        for (int i = 0; i < from->index; i++) {
+            add_to_hand(to, from->cards[i]);
+        }
+    }
 }

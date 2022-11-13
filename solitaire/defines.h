@@ -28,10 +28,11 @@ typedef enum {
 
 typedef struct {
     Deck deck;
-    int deckIndex;
-    bool has_side;
     Hand bottom_columns[7]; //13 items
-    Hand top_cards[4]; //13 items
+    Card top_cards[4];
+    bool dragging_deck;
+    uint8_t dragging_column;
+    Hand dragging_hand;
 
     InputKey input;
 
@@ -40,4 +41,7 @@ typedef struct {
     PlayState state;
     QueueState queue_state;
     unsigned int last_tick;
+    uint8_t selectRow;
+    uint8_t selectColumn;
+    bool columnTop;
 } GameState;
