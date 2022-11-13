@@ -256,18 +256,23 @@ draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, uint8_t max_cards, int
         return;
     }
     int count = max(hand.index - max_cards, 0);
-    int first_non_flipped = first_non_flipped_card(hand)+1;
 
 //    if (first_non_flipped < count)
     int loopEnd = min(count + max_cards, hand.index);
     int hStart = loopEnd - highlight + 1;
     int pos = 0;
-    int p=min(hStart, first_non_flipped);
-    if (p <= hand.index && hand.index>0) {
-        draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[p - 1].pip, hand.cards[p - 1].character, p>first_non_flipped || p==hStart,
+
+    if(highlight==-1 && hand.index<count){
+        int fi= first_non_flipped_card(hand);
+        draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[fi].pip, hand.cards[fi].character, false,
                              canvas);
         pos += 2;
-        if(p > hand.index-1) count++;
+    }
+
+    if (hStart <= count && highlight>0) {
+        draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[hStart - 1].pip, hand.cards[hStart - 1].character, true,
+                             canvas);
+        pos += 2;
     }
     for (int i = count; i < loopEnd; i++, pos++) {
         if (hand.cards[i].flipped) {

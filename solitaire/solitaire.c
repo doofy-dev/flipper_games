@@ -28,7 +28,7 @@ bool can_place_card(Card where, Card what) {
     if (a_letter == 12) a_letter = -1;
     if (b_letter == 12) b_letter = -1;
 
-    return a_letter > b_letter;
+    return (a_letter-1) == b_letter;
 }
 
 static void render_callback(Canvas *const canvas, void *ctx) {
@@ -61,7 +61,6 @@ static void render_callback(Canvas *const canvas, void *ctx) {
                 draw_card_space(columns[1][0], columns[1][1],
                                 game_state->selectRow == 0 && game_state->selectColumn == 1,
                                 canvas);
-
 
             for (uint8_t i = 0; i < 4; i++) {
                 Card current = game_state->top_cards[i];
@@ -119,7 +118,7 @@ bool handleInput(GameState *game_state) {
             if (game_state->selectRow > 0) {
                 int first = first_non_flipped_card(currentHand);
                 first=currentHand.index-first;
-                if(first>game_state->selected_card){
+                if(first>game_state->selected_card && game_state->dragging_hand.index == 0){
                     game_state->selected_card++;
                 }else{
                     game_state->selectRow--;
@@ -155,6 +154,9 @@ bool handleInput(GameState *game_state) {
         default:
             break;
     }
+
+    if(game_state->dragging_hand.index > 0)
+        game_state->selected_card=1;
     return false;
 }
 
@@ -164,6 +166,7 @@ void tick(GameState *game_state) {
     if (game_state->state != GameStatePlay) return;
 
     if (handleInput(game_state)) {
+
         if (row == 0 && column == 0 && game_state->dragging_hand.index == 0) {
             FURI_LOG_D(APP_NAME, "Drawing card");
             game_state->deck.index++;
@@ -199,7 +202,7 @@ void tick(GameState *game_state) {
                 int8_t b_letter = (int8_t) currCard.character;
                 if (a_letter == 12) a_letter = -1;
                 if (b_letter == 12) b_letter = -1;
-                if (a_letter < b_letter) {
+                if ((a_letter+1) == b_letter) {
                     game_state->top_cards[column] = currCard;
                     remove_drag(game_state);
                 }
@@ -214,9 +217,10 @@ void tick(GameState *game_state) {
                 if (curr_card.flipped) {
                     curr_hand->cards[curr_hand->index - 1].flipped = false;
                 } else {
-                    add_to_hand(&(game_state->dragging_hand), curr_card);
+                    extract_hand_region(curr_hand,&(game_state->dragging_hand), curr_hand->index-game_state->selected_card);
+//                    add_to_hand(&(game_state->dragging_hand), curr_card);
+                    game_state->selected_card=1;
                     game_state->dragging_column = column;
-                    curr_hand->index--;
                 }
             }
                 //place
