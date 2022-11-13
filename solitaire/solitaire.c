@@ -5,7 +5,24 @@
 #include "defines.h"
 #include "common/ui.h"
 #include "solitaire_icons.h"
+#include <notification/notification.h>
+#include <notification/notification_messages.h>
 
+const NotificationSequence sequence_fail = {
+        &message_vibro_on,
+        &message_note_c4,
+        &message_delay_10,
+        &message_vibro_off,
+        &message_sound_off,
+        &message_delay_10,
+
+        &message_vibro_on,
+        &message_note_a3,
+        &message_delay_10,
+        &message_vibro_off,
+        &message_sound_off,
+        NULL,
+};
 int8_t columns[7][3] = {
         {1,   1, 25},
         {19,  1, 25},
@@ -160,16 +177,18 @@ bool handleInput(GameState *game_state) {
     return false;
 }
 
-void tick(GameState *game_state) {
+void tick(GameState *game_state, NotificationApp* notification) {
     uint8_t row = game_state->selectRow;
     uint8_t column = game_state->selectColumn;
     if (game_state->state != GameStatePlay) return;
+    bool wasAction=false;
 
     if (handleInput(game_state)) {
 
         if (row == 0 && column == 0 && game_state->dragging_hand.index == 0) {
             FURI_LOG_D(APP_NAME, "Drawing card");
             game_state->deck.index++;
+            wasAction=true;
             if (game_state->deck.index >= (game_state->deck.card_count))
                 game_state->deck.index = -1;
         }
@@ -177,36 +196,40 @@ void tick(GameState *game_state) {
         else if (row == 0 && column == 1) {
             //place
             if (game_state->dragging_deck) {
+                wasAction=true;
                 game_state->dragging_deck = false;
                 game_state->dragging_hand.index = 0;
             }
                 //pick
             else {
                 if (game_state->dragging_hand.index == 0 && game_state->deck.index >= 0) {
+                    wasAction=true;
                     game_state->dragging_deck = true;
                     add_to_hand(&(game_state->dragging_hand), game_state->deck.cards[game_state->deck.index]);
                 }
             }
         }
             //place on top row
-        else if (row == 0 && game_state->dragging_hand.index == 1) {
-            column -= 3;
-            Card c = game_state->top_cards[column];
-            Card currCard = game_state->dragging_hand.cards[0];
+        else if (row == 0 && game_state->dragging_hand.index == 1){
+                column -= 3;
+                Card c = game_state->top_cards[column];
+                Card currCard = game_state->dragging_hand.cards[0];
 
-            if (c.disabled && currCard.character == 12) {
-                game_state->top_cards[column] = currCard;
-                remove_drag(game_state);
-            } else if (c.pip == currCard.pip) {
-                int8_t a_letter = (int8_t) c.character;
-                int8_t b_letter = (int8_t) currCard.character;
-                if (a_letter == 12) a_letter = -1;
-                if (b_letter == 12) b_letter = -1;
-                if ((a_letter+1) == b_letter) {
+                if (c.disabled && currCard.character == 12) {
                     game_state->top_cards[column] = currCard;
                     remove_drag(game_state);
+                    wasAction=true;
+                } else if (c.pip == currCard.pip) {
+                    int8_t a_letter = (int8_t) c.character;
+                    int8_t b_letter = (int8_t) currCard.character;
+                    if (a_letter == 12) a_letter = -1;
+                    if (b_letter == 12) b_letter = -1;
+                    if ((a_letter+1) == b_letter) {
+                        game_state->top_cards[column] = currCard;
+                        remove_drag(game_state);
+                    }
+                    wasAction=true;
                 }
-            }
         }
             //pick/place from bottom
         else if (row == 1) {
@@ -216,11 +239,15 @@ void tick(GameState *game_state) {
                 Card curr_card = curr_hand->cards[curr_hand->index - 1];
                 if (curr_card.flipped) {
                     curr_hand->cards[curr_hand->index - 1].flipped = false;
+                    wasAction=true;
                 } else {
-                    extract_hand_region(curr_hand,&(game_state->dragging_hand), curr_hand->index-game_state->selected_card);
-//                    add_to_hand(&(game_state->dragging_hand), curr_card);
-                    game_state->selected_card=1;
-                    game_state->dragging_column = column;
+                    if(curr_hand->index>0) {
+                        extract_hand_region(curr_hand, &(game_state->dragging_hand),
+                                            curr_hand->index - game_state->selected_card);
+                        game_state->selected_card = 1;
+                        game_state->dragging_column = column;
+                        wasAction = true;
+                    }
                 }
             }
                 //place
@@ -232,10 +259,13 @@ void tick(GameState *game_state) {
                         ) {
                     add_hand_region(curr_hand, &(game_state->dragging_hand));
                     remove_drag(game_state);
+                    wasAction=true;
                 }
             }
         }
-
+        if(!wasAction){
+            notification_message(notification, &sequence_fail);
+        }
     }
     if (game_state->selectRow == 0 && game_state->selectColumn == 2) {
         if (game_state->input == InputKeyRight)
@@ -309,6 +339,9 @@ int32_t solitaire_app(void *p) {
         return_code = 255;
         goto free_and_exit;
     }
+    NotificationApp* notification = furi_record_open(RECORD_NOTIFICATION);
+
+    notification_message_block(notification, &sequence_display_backlight_enforce_on);
 
     ViewPort *view_port = view_port_alloc();
     view_port_draw_callback_set(view_port, render_callback, &state_mutex);
@@ -351,7 +384,7 @@ int32_t solitaire_app(void *p) {
                     }
                 }
             } else if (event.type == EventTypeTick) {
-                tick(localstate);
+                tick(localstate,notification);
                 processing = localstate->processing;
                 localstate->input = InputKeyMAX;
             }

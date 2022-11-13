@@ -263,8 +263,7 @@ draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, uint8_t max_cards, int
     int pos = 0;
 
     if(highlight==-1 && hand.index<count){
-        int fi= first_non_flipped_card(hand);
-        draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[fi].pip, hand.cards[fi].character, false,
+        draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[0].pip, hand.cards[0].character, false,
                              canvas);
         pos += 2;
     }
