@@ -43,5 +43,5 @@ typedef struct {
     unsigned int last_tick;
     uint8_t selectRow;
     uint8_t selectColumn;
-    bool columnTop;
+    int8_t selected_card;
 } GameState;

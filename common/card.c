@@ -250,24 +250,40 @@ int first_non_flipped_card(Hand hand) {
 }
 
 void
-draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, uint8_t max_cards, bool highlightedTop, bool highlightedBottom, Canvas *const canvas) {
+draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, uint8_t max_cards, int8_t highlight, Canvas *const canvas) {
     if (hand.index == 0) {
-        draw_card_space(pos_x, pos_y, highlightedTop||highlightedBottom, canvas);
+        draw_card_space(pos_x, pos_y, highlight > 0, canvas);
         return;
     }
     int count = max(hand.index - max_cards, 0);
-//    int first_non_flipped = first_non_flipped_card(hand);
+    int first_non_flipped = first_non_flipped_card(hand)+1;
 
 //    if (first_non_flipped < count)
+    int loopEnd = min(count + max_cards, hand.index);
+    int hStart = loopEnd - highlight + 1;
+    int pos = 0;
+    int p=min(hStart, first_non_flipped);
+    if (p <= hand.index && hand.index>0) {
+        draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[p - 1].pip, hand.cards[p - 1].character, p>first_non_flipped || p==hStart,
+                             canvas);
+        pos += 2;
+        if(p > hand.index-1) count++;
+    }
+    for (int i = count; i < loopEnd; i++, pos++) {
+        if (hand.cards[i].flipped) {
+            draw_card_back_at(pos_x, pos_y + pos * 4, canvas);
+        } else {
+            if (
+                    (highlight == -1 && i == count + 1) ||
+                    (hStart == (i) && count < hStart)
+                    )
+                pos++;
 
-        for (int i = count, pos = 0; i < min(count + max_cards, hand.index); i++, pos++) {
-            if (hand.cards[i].flipped) {
-                draw_card_back_at(pos_x, pos_y + pos * 4, canvas);
-            } else {
-                draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[i].pip, hand.cards[i].character, highlightedBottom,
-                                     canvas);
-            }
+            draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[i].pip, hand.cards[i].character,
+                                 (i == (hStart - 1)) || (highlight == 1 && i == (loopEnd - 1)),
+                                 canvas);
         }
+    }
 }
 
 Card remove_from_deck(uint16_t index, Deck *deck) {

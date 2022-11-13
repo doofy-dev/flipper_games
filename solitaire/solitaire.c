@@ -78,8 +78,8 @@ static void render_callback(Canvas *const canvas, void *ctx) {
             }
             for (uint8_t i = 0; i < 7; i++) {
                 bool selected = game_state->selectRow == 1 && game_state->selectColumn == i;
-                draw_hand_column(game_state->bottom_columns[i], columns[i][0], columns[i][2], 5,
-                                 selected && game_state->columnTop, selected && !game_state->columnTop, canvas);
+                draw_hand_column(game_state->bottom_columns[i], columns[i][0], columns[i][2], 4,
+                                 selected ? game_state->selected_card : 0, canvas);
             }
 
             int8_t pos[2] = {columns[game_state->selectColumn][0],
@@ -90,7 +90,7 @@ static void render_callback(Canvas *const canvas, void *ctx) {
             if (game_state->dragging_hand.index > 0) {
                 draw_hand_column(game_state->dragging_hand,
                                  pos[0] + CARD_HALF_WIDTH + 3, pos[1] + CARD_HALF_HEIGHT + 3,
-                                 5, false, false, canvas);
+                                 4, -1, canvas);
             }
 
             break;
@@ -113,24 +113,41 @@ void remove_drag(GameState *gameState) {
 }
 
 bool handleInput(GameState *game_state) {
+    Hand currentHand = game_state->bottom_columns[game_state->selectColumn];
     switch (game_state->input) {
         case InputKeyUp:
             if (game_state->selectRow > 0) {
-                game_state->selectRow--;
+                int first = first_non_flipped_card(currentHand);
+                first=currentHand.index-first;
+                if(first>game_state->selected_card){
+                    game_state->selected_card++;
+                }else{
+                    game_state->selectRow--;
+                    game_state->selected_card=1;
+                }
             }
             break;
         case InputKeyDown:
             if (game_state->selectRow < 1) {
                 game_state->selectRow++;
+                game_state->selected_card=1;
+            }else{
+                if(game_state->selected_card>1){
+                    game_state->selected_card--;
+                }
             }
             break;
         case InputKeyRight:
-            if (game_state->selectColumn < 6)
+            if (game_state->selectColumn < 6) {
                 game_state->selectColumn++;
+                game_state->selected_card=1;
+            }
             break;
         case InputKeyLeft:
-            if (game_state->selectColumn > 0)
+            if (game_state->selectColumn > 0) {
                 game_state->selectColumn--;
+                game_state->selected_card=1;
+            }
             break;
         case InputKeyOk:
             return true;
@@ -225,8 +242,8 @@ void tick(GameState *game_state) {
 }
 
 void init(GameState *game_state) {
-    game_state->columnTop = false;
     game_state->selectColumn = 0;
+    game_state->selected_card = 1;
     game_state->selectRow = 0;
     generate_deck(&(game_state->deck), 1);
     shuffle_deck(&(game_state->deck));
@@ -237,7 +254,7 @@ void init(GameState *game_state) {
         game_state->bottom_columns[i].index = 0;
         for (uint8_t j = 0; j <= i; j++) {
             Card cur = remove_from_deck(0, &(game_state->deck));
-            cur.flipped = i != j;
+          //  cur.flipped = i != j;
             add_to_hand(&(game_state->bottom_columns[i]), cur);
         }
     }
