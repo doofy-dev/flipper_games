@@ -10,10 +10,13 @@ TileMap *tileMap;
 uint8_t tileMapCount = 0;
 
 void ui_cleanup() {
-    for (uint8_t i = 0; i < tileMapCount; i++) {
-        free(tileMap[i].data);
+    if (tileMap != NULL) {
+        for (uint8_t i = 0; i < tileMapCount; i++) {
+            if (tileMap[i].data != NULL)
+                free(tileMap[i].data);
+        }
+        free(tileMap);
     }
-    free(tileMap);
 }
 
 void add_new_tilemap(uint8_t *data, unsigned long iconId) {
@@ -64,9 +67,14 @@ bool test_pixel(uint8_t *data, uint8_t x, uint8_t y, uint8_t w) {
     return current_value & (1 << current_bit);
 }
 
+uint8_t* get_buffer(Canvas *const canvas){
+    return canvas_get_buffer(canvas);
+}
+
+
 bool read_pixel(Canvas *const canvas, int16_t x, int16_t y) {
     if (in_screen(x, y)) {
-        return test_pixel(canvas->fb.tile_buf_ptr, x, y, SCREEN_WIDTH);
+        return test_pixel(get_buffer(canvas), x, y, SCREEN_WIDTH);
     }
     return false;
 }
@@ -76,15 +84,16 @@ void set_pixel(Canvas *const canvas, int16_t x, int16_t y, DrawMode draw_mode) {
         uint8_t current_bit = (y % 8);
         uint8_t current_row = ((y - current_bit) / 8);
         uint32_t i = pixel_index(x, current_row);
+        uint8_t* buffer = get_buffer(canvas);
 
-        uint8_t current_value = canvas->fb.tile_buf_ptr[i];
+        uint8_t current_value = buffer[i];
         if (draw_mode == Inverse) {
-            canvas->fb.tile_buf_ptr[i] = flipBit(current_value, current_bit);
+            buffer[i] = flipBit(current_value, current_bit);
         } else {
             if (draw_mode == White) {
-                canvas->fb.tile_buf_ptr[i] = unsetBit(current_value, current_bit);
+                buffer[i] = unsetBit(current_value, current_bit);
             } else {
-                canvas->fb.tile_buf_ptr[i] = setBit(current_value, current_bit);
+                buffer[i] = setBit(current_value, current_bit);
             }
         }
     }
@@ -171,11 +180,10 @@ void draw_icon_clip(Canvas *const canvas, const Icon *icon, int16_t x, int16_t y
 
     for (int i = 0; i < w; i++) {
         for (int j = 0; j < h; j++) {
-            bool on=test_pixel(icon_data, left + i, top + j, SCREEN_WIDTH);
+            bool on = test_pixel(icon_data, left + i, top + j, SCREEN_WIDTH);
             if (drawMode == Filled) {
-                set_pixel(canvas, x + i, y + j, on ? Black : White );
-            }
-            else if (on)
+                set_pixel(canvas, x + i, y + j, on ? Black : White);
+            } else if (on)
                 set_pixel(canvas, x + i, y + j, drawMode);
         }
     }
@@ -188,7 +196,7 @@ void draw_icon_clip_flipped(Canvas *const canvas, const Icon *icon, int16_t x, i
 
     for (int i = 0; i < w; i++) {
         for (int j = 0; j < h; j++) {
-            bool on=test_pixel(icon_data, left + i, top + j, SCREEN_WIDTH);
+            bool on = test_pixel(icon_data, left + i, top + j, SCREEN_WIDTH);
 
             if (drawMode == Filled) {
                 set_pixel(canvas, x + w - i - 1, y + h - j - 1, on ? Black : White);

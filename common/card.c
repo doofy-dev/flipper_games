@@ -142,9 +142,11 @@ void draw_card_back_at(int8_t pos_x, int8_t pos_y, Canvas *const canvas) {
 
 void generate_deck(Deck *deck_ptr, uint8_t deck_count) {
     uint16_t counter = 0;
-    deck_ptr->deck_count = deck_count;
-    deck_ptr->card_count = deck_count * 52;
-    deck_ptr->cards = malloc(sizeof(Card) * 52 * deck_count);
+    if (deck_ptr->cards == NULL) {
+        deck_ptr->deck_count = deck_count;
+        deck_ptr->card_count = deck_count * 52;
+        deck_ptr->cards = malloc(sizeof(Card) * 52 * deck_count);
+    }
     for (uint8_t deck = 0; deck < deck_count; deck++) {
         for (uint8_t pip = 0; pip < 4; pip++) {
             for (uint8_t label = 0; label < 13; label++) {
@@ -220,10 +222,12 @@ void init_hand(Hand *hand_ptr, uint8_t count) {
 }
 
 void free_hand(Hand *hand_ptr) {
+    FURI_LOG_D("CARD", "Freeing hand");
     free(hand_ptr->cards);
 }
 
 void add_to_hand(Hand *hand_ptr, Card card) {
+    FURI_LOG_D("CARD", "Adding to hand");
     if (hand_ptr->index < hand_ptr->max) {
         hand_ptr->cards[hand_ptr->index] = card;
         hand_ptr->index++;
@@ -262,13 +266,14 @@ draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, uint8_t max_cards, int
     int hStart = loopEnd - highlight + 1;
     int pos = 0;
 
-    if(highlight==-1 && hand.index<count){
+    if (highlight == -1/* && hand.index <= count*/) {
         draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[0].pip, hand.cards[0].character, false,
                              canvas);
         pos += 2;
+        count++;
     }
 
-    if (hStart <= count && highlight>0) {
+    if (hStart <= count && highlight > 0) {
         draw_card_at_colored(pos_x, pos_y + pos * 4, hand.cards[hStart - 1].pip, hand.cards[hStart - 1].character, true,
                              canvas);
         pos += 2;
@@ -277,9 +282,7 @@ draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, uint8_t max_cards, int
         if (hand.cards[i].flipped) {
             draw_card_back_at(pos_x, pos_y + pos * 4, canvas);
         } else {
-            if (
-                    (highlight == -1 && i == count + 1) ||
-                    (hStart == (i) && count < hStart)
+            if ((hStart == (i) && count < hStart)
                     )
                 pos++;
 
@@ -291,6 +294,7 @@ draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, uint8_t max_cards, int
 }
 
 Card remove_from_deck(uint16_t index, Deck *deck) {
+    FURI_LOG_D("CARD", "Removing from deck");
     Card result = {0, 0, true, false};
     if (deck->card_count > 0) {
         deck->card_count--;
@@ -312,6 +316,7 @@ Card remove_from_deck(uint16_t index, Deck *deck) {
 }
 
 void extract_hand_region(Hand *hand, Hand *to, uint8_t start_index) {
+    FURI_LOG_D("CARD", "Extracting hand region");
     if (start_index >= hand->index) return;
 
     for (uint8_t i = start_index; i < hand->index; i++) {
@@ -321,6 +326,7 @@ void extract_hand_region(Hand *hand, Hand *to, uint8_t start_index) {
 }
 
 void add_hand_region(Hand *to, Hand *from) {
+    FURI_LOG_D("CARD", "Adding hand region");
     if ((to->index + from->index) <= to->max) {
         for (int i = 0; i < from->index; i++) {
             add_to_hand(to, from->cards[i]);

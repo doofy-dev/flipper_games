@@ -45,12 +45,12 @@ bool can_place_card(Card where, Card what) {
     if (a_letter == 12) a_letter = -1;
     if (b_letter == 12) b_letter = -1;
 
-    return (a_letter-1) == b_letter;
+    return (a_letter - 1) == b_letter;
 }
 
 static void render_callback(Canvas *const canvas, void *ctx) {
     const GameState *game_state = acquire_mutex((ValueMutex *) ctx, 25);
-    if (game_state== NULL) {
+    if (game_state == NULL) {
         return;
     }
 
@@ -73,7 +73,8 @@ static void render_callback(Canvas *const canvas, void *ctx) {
             //deck side
             if (deckIndex >= 0) {
                 Card c = game_state->deck.cards[deckIndex];
-                draw_card_at(columns[1][0], columns[1][1], c.pip, c.character, canvas);
+                draw_card_at_colored(columns[1][0], columns[1][1], c.pip, c.character,
+                                     game_state->selectRow == 0 && game_state->selectColumn == 1, canvas);
             } else
                 draw_card_space(columns[1][0], columns[1][1],
                                 game_state->selectRow == 0 && game_state->selectColumn == 1,
@@ -92,6 +93,7 @@ static void render_callback(Canvas *const canvas, void *ctx) {
                     }
                 }
             }
+
             for (uint8_t i = 0; i < 7; i++) {
                 bool selected = game_state->selectRow == 1 && game_state->selectColumn == i;
                 draw_hand_column(game_state->bottom_columns[i], columns[i][0], columns[i][2], 4,
@@ -101,7 +103,9 @@ static void render_callback(Canvas *const canvas, void *ctx) {
             int8_t pos[2] = {columns[game_state->selectColumn][0],
                              columns[game_state->selectColumn][game_state->selectRow + 1]};
 
-            draw_icon_clip(canvas, &I_card_graphics, pos[0] + CARD_HALF_WIDTH, pos[1] + CARD_HALF_HEIGHT, 30, 5, 5, 5, Filled);
+            draw_icon_clip(canvas, &I_card_graphics, pos[0] + CARD_HALF_WIDTH, pos[1] + CARD_HALF_HEIGHT, 30, 5, 5, 5,
+                           Filled);
+
 
             if (game_state->dragging_hand.index > 0) {
                 draw_hand_column(game_state->dragging_hand,
@@ -118,14 +122,16 @@ static void render_callback(Canvas *const canvas, void *ctx) {
 
 }
 
-void remove_drag(GameState *gameState) {
-    if (gameState->dragging_deck) {
-        remove_from_deck(gameState->deck.index, &(gameState->deck));
-        gameState->dragging_deck = false;
-    } else if (gameState->dragging_column < 7) {
-        gameState->dragging_column = 8;
+void remove_drag(GameState *game_state) {
+    if (game_state->dragging_deck) {
+        remove_from_deck(game_state->deck.index, &(game_state->deck));
+        game_state->dragging_deck = false;
+        game_state->deck.index--;
+        game_state->deck.card_count--;
+    } else if (game_state->dragging_column < 7) {
+        game_state->dragging_column = 8;
     }
-    gameState->dragging_hand.index = 0;
+    game_state->dragging_hand.index = 0;
 }
 
 bool handleInput(GameState *game_state) {
@@ -134,21 +140,21 @@ bool handleInput(GameState *game_state) {
         case InputKeyUp:
             if (game_state->selectRow > 0) {
                 int first = first_non_flipped_card(currentHand);
-                first=currentHand.index-first;
-                if(first>game_state->selected_card && game_state->dragging_hand.index == 0){
+                first = currentHand.index - first;
+                if (first > game_state->selected_card && game_state->dragging_hand.index == 0) {
                     game_state->selected_card++;
-                }else{
+                } else {
                     game_state->selectRow--;
-                    game_state->selected_card=1;
+                    game_state->selected_card = 1;
                 }
             }
             break;
         case InputKeyDown:
             if (game_state->selectRow < 1) {
                 game_state->selectRow++;
-                game_state->selected_card=1;
-            }else{
-                if(game_state->selected_card>1){
+                game_state->selected_card = 1;
+            } else {
+                if (game_state->selected_card > 1) {
                     game_state->selected_card--;
                 }
             }
@@ -156,13 +162,13 @@ bool handleInput(GameState *game_state) {
         case InputKeyRight:
             if (game_state->selectColumn < 6) {
                 game_state->selectColumn++;
-                game_state->selected_card=1;
+                game_state->selected_card = 1;
             }
             break;
         case InputKeyLeft:
             if (game_state->selectColumn > 0) {
                 game_state->selectColumn--;
-                game_state->selected_card=1;
+                game_state->selected_card = 1;
             }
             break;
         case InputKeyOk:
@@ -172,23 +178,22 @@ bool handleInput(GameState *game_state) {
             break;
     }
 
-    if(game_state->dragging_hand.index > 0)
-        game_state->selected_card=1;
+    if (game_state->dragging_hand.index > 0)
+        game_state->selected_card = 1;
     return false;
 }
 
-void tick(GameState *game_state, NotificationApp* notification) {
+void tick(GameState *game_state, NotificationApp *notification) {
     uint8_t row = game_state->selectRow;
     uint8_t column = game_state->selectColumn;
     if (game_state->state != GameStatePlay) return;
-    bool wasAction=false;
+    bool wasAction = false;
 
     if (handleInput(game_state)) {
-
         if (row == 0 && column == 0 && game_state->dragging_hand.index == 0) {
             FURI_LOG_D(APP_NAME, "Drawing card");
             game_state->deck.index++;
-            wasAction=true;
+            wasAction = true;
             if (game_state->deck.index >= (game_state->deck.card_count))
                 game_state->deck.index = -1;
         }
@@ -196,40 +201,40 @@ void tick(GameState *game_state, NotificationApp* notification) {
         else if (row == 0 && column == 1) {
             //place
             if (game_state->dragging_deck) {
-                wasAction=true;
+                wasAction = true;
                 game_state->dragging_deck = false;
                 game_state->dragging_hand.index = 0;
             }
                 //pick
             else {
                 if (game_state->dragging_hand.index == 0 && game_state->deck.index >= 0) {
-                    wasAction=true;
+                    wasAction = true;
                     game_state->dragging_deck = true;
                     add_to_hand(&(game_state->dragging_hand), game_state->deck.cards[game_state->deck.index]);
                 }
             }
         }
             //place on top row
-        else if (row == 0 && game_state->dragging_hand.index == 1){
-                column -= 3;
-                Card c = game_state->top_cards[column];
-                Card currCard = game_state->dragging_hand.cards[0];
+        else if (row == 0 && game_state->dragging_hand.index == 1) {
+            column -= 3;
+            Card c = game_state->top_cards[column];
+            Card currCard = game_state->dragging_hand.cards[0];
 
-                if (c.disabled && currCard.character == 12) {
+            if (c.disabled && currCard.character == 12) {
+                game_state->top_cards[column] = currCard;
+                remove_drag(game_state);
+                wasAction = true;
+            } else if (c.pip == currCard.pip) {
+                int8_t a_letter = (int8_t) c.character;
+                int8_t b_letter = (int8_t) currCard.character;
+                if (a_letter == 12) a_letter = -1;
+                if (b_letter == 12) b_letter = -1;
+                if ((a_letter + 1) == b_letter) {
                     game_state->top_cards[column] = currCard;
                     remove_drag(game_state);
-                    wasAction=true;
-                } else if (c.pip == currCard.pip) {
-                    int8_t a_letter = (int8_t) c.character;
-                    int8_t b_letter = (int8_t) currCard.character;
-                    if (a_letter == 12) a_letter = -1;
-                    if (b_letter == 12) b_letter = -1;
-                    if ((a_letter+1) == b_letter) {
-                        game_state->top_cards[column] = currCard;
-                        remove_drag(game_state);
-                    }
-                    wasAction=true;
                 }
+                wasAction = true;
+            }
         }
             //pick/place from bottom
         else if (row == 1) {
@@ -239,9 +244,9 @@ void tick(GameState *game_state, NotificationApp* notification) {
                 Card curr_card = curr_hand->cards[curr_hand->index - 1];
                 if (curr_card.flipped) {
                     curr_hand->cards[curr_hand->index - 1].flipped = false;
-                    wasAction=true;
+                    wasAction = true;
                 } else {
-                    if(curr_hand->index>0) {
+                    if (curr_hand->index > 0) {
                         extract_hand_region(curr_hand, &(game_state->dragging_hand),
                                             curr_hand->index - game_state->selected_card);
                         game_state->selected_card = 1;
@@ -259,11 +264,11 @@ void tick(GameState *game_state, NotificationApp* notification) {
                         ) {
                     add_hand_region(curr_hand, &(game_state->dragging_hand));
                     remove_drag(game_state);
-                    wasAction=true;
+                    wasAction = true;
                 }
             }
         }
-        if(!wasAction){
+        if (!wasAction) {
             notification_message(notification, &sequence_fail);
         }
     }
@@ -288,7 +293,7 @@ void init(GameState *game_state) {
         game_state->bottom_columns[i].index = 0;
         for (uint8_t j = 0; j <= i; j++) {
             Card cur = remove_from_deck(0, &(game_state->deck));
-          //  cur.flipped = i != j;
+//            cur.flipped = i != j;
             add_to_hand(&(game_state->bottom_columns[i]), cur);
         }
     }
@@ -301,10 +306,9 @@ void init(GameState *game_state) {
 }
 
 void init_start(GameState *game_state) {
-    generate_deck(&(game_state->deck), 1);
     game_state->input = InputKeyMAX;
     for (uint8_t i = 0; i < 7; i++)
-        init_hand(&(game_state->bottom_columns[i]), 13);
+        init_hand(&(game_state->bottom_columns[i]), 21);
 
     init_hand(&(game_state->dragging_hand), 13);
 
@@ -339,7 +343,7 @@ int32_t solitaire_app(void *p) {
         return_code = 255;
         goto free_and_exit;
     }
-    NotificationApp* notification = furi_record_open(RECORD_NOTIFICATION);
+    NotificationApp *notification = furi_record_open(RECORD_NOTIFICATION);
 
     notification_message_block(notification, &sequence_display_backlight_enforce_on);
 
@@ -384,7 +388,7 @@ int32_t solitaire_app(void *p) {
                     }
                 }
             } else if (event.type == EventTypeTick) {
-                tick(localstate,notification);
+                tick(localstate, notification);
                 processing = localstate->processing;
                 localstate->input = InputKeyMAX;
             }
@@ -401,6 +405,7 @@ int32_t solitaire_app(void *p) {
     view_port_enabled_set(view_port, false);
     gui_remove_view_port(gui, view_port);
     furi_record_close(RECORD_GUI);
+    furi_record_close(RECORD_NOTIFICATION);
     view_port_free(view_port);
     delete_mutex(&state_mutex);
 
@@ -410,7 +415,6 @@ int32_t solitaire_app(void *p) {
         free_hand(&(game_state->bottom_columns[i]));
 
     free(game_state->deck.cards);
-    queue_clear(&(game_state->queue_state));
     free(game_state);
     furi_message_queue_free(event_queue);
     return return_code;
