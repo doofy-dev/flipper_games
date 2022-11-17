@@ -156,12 +156,11 @@ void draw_card_space(int16_t pos_x, int16_t pos_y, bool highlighted, Canvas *con
  * @param hand              Hand object
  * @param pos_x             X coordinate to draw
  * @param pos_y             Y coordinate to draw
- * @param max_cards         Max cards to draw from the end of the list
- * @param highlight         End-index will be highlighted, if negative, the first item get more space to be visible. 0 means no highlight
+ * @param highlight         Index to highlight, negative means no highlight
  * @param canvas            Canvas object
  */
 void
-draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, uint8_t max_cards, int8_t highlight, Canvas *const canvas);
+draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, int8_t highlight, Canvas *const canvas);
 
 /**
  * Removes a card from the deck (Be aware, if you remove the first item, the deck index will be at -1 so you have to handle that)

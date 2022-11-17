@@ -27,6 +27,18 @@ typedef enum {
 } PlayState;
 
 typedef struct {
+    uint8_t *buffer;
+    Card card;
+    int8_t deck;
+    int indexes[4];
+    int8_t x;
+    int8_t y;
+    float vx;
+    float vy;
+    bool started;
+} CardAnimation;
+
+typedef struct {
     Deck deck;
     Hand bottom_columns[7];
     Card top_cards[4];
@@ -38,9 +50,12 @@ typedef struct {
 
     bool started;
     bool processing;
+    bool longPress;
     PlayState state;
     unsigned int last_tick;
     uint8_t selectRow;
     uint8_t selectColumn;
     int8_t selected_card;
+    CardAnimation animation;
+    uint8_t *buffer;
 } GameState;

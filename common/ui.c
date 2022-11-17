@@ -70,6 +70,14 @@ bool test_pixel(uint8_t *data, uint8_t x, uint8_t y, uint8_t w) {
 uint8_t* get_buffer(Canvas *const canvas){
     return canvas_get_buffer(canvas);
 }
+uint8_t* make_buffer(){
+    return malloc(sizeof(uint8_t) * 8 * 126);
+}
+void clone_buffer(uint8_t* canvas, uint8_t* data){
+    for(int i=0;i<1008;i++){
+        data[i]= canvas[i];
+    }
+}
 
 
 bool read_pixel(Canvas *const canvas, int16_t x, int16_t y) {
