@@ -239,6 +239,9 @@ int first_non_flipped_card(Hand hand) {
 void draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, int8_t highlight, Canvas *const canvas) {
     if (hand.index == 0) {
         draw_card_space(pos_x, pos_y, highlight > 0, canvas);
+        if(highlight==0)
+            draw_rounded_box(canvas, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT,
+                             Inverse);
         return;
     }
 
@@ -275,6 +278,9 @@ void draw_hand_column(Hand hand, int16_t pos_x, int16_t pos_y, int8_t highlight,
     for (int i = hStart; i < loopEnd; i++, pos+=4) {
         if (hand.cards[i].flipped) {
             draw_card_back_at(pos_x, pos_y + pos, canvas);
+            if(i==highlight)
+            draw_rounded_box(canvas, pos_x+1, pos_y + pos+1, CARD_WIDTH - 2, CARD_HEIGHT - 2,
+                             Inverse);
         } else {
             draw_card_at_colored(pos_x, pos_y + pos, hand.cards[i].pip, hand.cards[i].character,
                                  (i == highlight),

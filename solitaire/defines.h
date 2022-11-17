@@ -31,8 +31,8 @@ typedef struct {
     Card card;
     int8_t deck;
     int indexes[4];
-    int8_t x;
-    int8_t y;
+    float x;
+    float y;
     float vx;
     float vy;
     bool started;

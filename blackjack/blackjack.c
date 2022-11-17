@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <dolphin/dolphin.h>
 #include <dialogs/dialogs.h>
+#include <gui/canvas_i.h>
+
 #include <math.h>
 #include "util.h"
 #include "defines.h"

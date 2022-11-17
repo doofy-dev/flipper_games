@@ -53,6 +53,6 @@ void draw_line(Canvas *const canvas, int16_t x1, int16_t y1, int16_t x2, int16_t
 bool in_screen(int16_t x, int16_t y);
 
 void ui_cleanup();
-
+uint8_t* get_buffer(Canvas *const canvas);
 uint8_t* make_buffer();
 void clone_buffer(uint8_t* canvas, uint8_t* data);

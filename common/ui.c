@@ -68,13 +68,14 @@ bool test_pixel(uint8_t *data, uint8_t x, uint8_t y, uint8_t w) {
 }
 
 uint8_t* get_buffer(Canvas *const canvas){
-    return canvas_get_buffer(canvas);
+    return canvas->fb.tile_buf_ptr;
+  //  return canvas_get_buffer(canvas);
 }
 uint8_t* make_buffer(){
-    return malloc(sizeof(uint8_t) * 8 * 126);
+    return malloc(sizeof(uint8_t) * 8 * 128);
 }
 void clone_buffer(uint8_t* canvas, uint8_t* data){
-    for(int i=0;i<1008;i++){
+    for(int i=0;i<1024;i++){
         data[i]= canvas[i];
     }
 }
@@ -165,7 +166,7 @@ void invert_rectangle(Canvas *const canvas, int16_t x, int16_t y, uint8_t w, uin
 }
 
 uint8_t *image_data(Canvas *const canvas, const Icon *icon) {
-    uint8_t *data = malloc(sizeof(uint8_t) * 8 * 126);
+    uint8_t *data = malloc(sizeof(uint8_t) * 8 * 128);
     uint8_t *screen = canvas->fb.tile_buf_ptr;
     canvas->fb.tile_buf_ptr = data;
     canvas_draw_icon(canvas, 0, 0, icon);

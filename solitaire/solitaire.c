@@ -53,7 +53,7 @@ static void draw_scene(Canvas *const canvas, const GameState *game_state) {
     if (game_state->dragging_deck)
         deckIndex--;
 
-    if (game_state->deck.index < (game_state->deck.card_count - 1) || game_state->deck.index == -1) {
+    if ((game_state->deck.index < (game_state->deck.card_count - 1) || game_state->deck.index == -1) && game_state->deck.card_count>0) {
         draw_card_back_at(columns[0][0], columns[0][1], canvas);
         if (game_state->selectRow == 0 && game_state->selectColumn == 0) {
             draw_rounded_box(canvas, columns[0][0] + 1, columns[0][1] + 1, CARD_WIDTH - 2, CARD_HEIGHT - 2,
@@ -89,8 +89,10 @@ static void draw_scene(Canvas *const canvas, const GameState *game_state) {
 
     for (uint8_t i = 0; i < 7; i++) {
         bool selected = game_state->selectRow == 1 && game_state->selectColumn == i;
+        int8_t index= (game_state->bottom_columns[i].index - 1 - game_state->selected_card);
+        if(index<0)index=0;
         draw_hand_column(game_state->bottom_columns[i], columns[i][0], columns[i][2],
-                         selected ? (game_state->bottom_columns[i].index - 1 - game_state->selected_card) : -1, canvas);
+                         selected ? index : -1, canvas);
     }
 
     int8_t pos[2] = {columns[game_state->selectColumn][0],
@@ -110,17 +112,14 @@ static void draw_animation(Canvas *const canvas, const GameState *game_state) {
     if (!game_state->animation.started) {
         draw_scene(canvas, game_state);
     } else {
-        clone_buffer(game_state->animation.buffer, canvas_get_buffer(canvas));
+        clone_buffer(game_state->animation.buffer, get_buffer(canvas));
 
-        draw_card_at(game_state->animation.x, game_state->animation.y, game_state->animation.card.pip,
-                     game_state->animation.card.character, canvas);
-
-        draw_card_at(game_state->animation.x, game_state->animation.y+4, game_state->animation.card.pip,
+        draw_card_at((int8_t) game_state->animation.x, (int8_t) game_state->animation.y, game_state->animation.card.pip,
                      game_state->animation.card.character, canvas);
 
     }
 
-    clone_buffer(canvas_get_buffer(canvas), game_state->animation.buffer);
+    clone_buffer(get_buffer(canvas), game_state->animation.buffer);
 }
 
 static void render_callback(Canvas *const canvas, void *ctx) {
@@ -240,11 +239,16 @@ void tick(GameState *game_state, NotificationApp *notification) {
     game_state->last_tick = furi_get_tick();
     uint8_t row = game_state->selectRow;
     uint8_t column = game_state->selectColumn;
-    if (game_state->state != GameStatePlay && game_state->state!=GameStateAnimate) return;
+    if (game_state->state != GameStatePlay && game_state->state != GameStateAnimate) return;
     bool wasAction = false;
 
     if (handleInput(game_state)) {
         if (game_state->state == GameStatePlay) {
+
+            if(game_state->top_cards[0].character==11 && game_state->top_cards[1].character==11 && game_state->top_cards[2].character==11 && game_state->top_cards[3].character==11){
+                game_state->state=GameStateAnimate;
+                return;
+            }
             if (game_state->longPress && game_state->dragging_hand.index == 1) {
                 for (uint8_t i = 0; i < 4; i++) {
                     if (place_on_top(&(game_state->top_cards[i]), game_state->dragging_hand.cards[0])) {
@@ -325,31 +329,47 @@ void tick(GameState *game_state, NotificationApp *notification) {
                 notification_message(notification, &sequence_fail);
             }
         }
-        game_state->state = GameStateAnimate;
     }
     if (game_state->state == GameStateAnimate) {
+        if (game_state->animation.started)
+            game_state->state = GameStateStart;
+
         game_state->animation.started = true;
-        if (game_state->animation.x < 0) {
+        if (game_state->animation.x < -20 || game_state->animation.x > 128) {
             game_state->animation.deck++;
             if (game_state->animation.deck > 3)
                 game_state->animation.deck = 0;
+            int8_t cardIndex = 11 - game_state->animation.indexes[game_state->animation.deck];
+
+            if (game_state->animation.indexes[0] == 13 &&
+                game_state->animation.indexes[1] == 13 &&
+                game_state->animation.indexes[2] == 13 &&
+                game_state->animation.indexes[3] == 13) {
+                game_state->state = GameStateStart;
+                return;
+            }
+
+            if (cardIndex == -1)
+                cardIndex = 12;
             game_state->animation.card = (Card) {
                     game_state->top_cards[game_state->animation.deck].pip,
-                    13 - game_state->animation.indexes[game_state->animation.deck],
+                    cardIndex,
                     false, false
             };
-            game_state->animation.vx=-(rand()%3+1);
-            game_state->animation.vy=(rand()%5+1);
-            game_state->animation.x=columns[game_state->animation.deck + 3][0];
-            game_state->animation.y=columns[game_state->animation.deck + 3][1];
+            game_state->animation.indexes[game_state->animation.deck]++;
+            game_state->animation.vx = -(rand() % 3 + 1) * (rand() % 2 == 1 ? 1 : -1);
+            game_state->animation.vy = (rand() % 3 + 1);
+            game_state->animation.x = columns[game_state->animation.deck + 3][0];
+            game_state->animation.y = columns[game_state->animation.deck + 3][1];
         }
-        game_state->animation.x+= (int8_t)round(game_state->animation.vx);
-        game_state->animation.y-= (int8_t)round(game_state->animation.vy);
-        game_state->animation.vy-=1;
-        if(game_state->animation.vy<-5)game_state->animation.vy=-5;
+        game_state->animation.x += game_state->animation.vx;
+        game_state->animation.y -= game_state->animation.vy;
+        game_state->animation.vy -= 1;
+        if (game_state->animation.vy < -10)game_state->animation.vy = -10;
 
-        if(game_state->animation.y>41){
-            game_state->animation.vy=-game_state->animation.vy-1;
+        if (game_state->animation.y > 41) {
+            game_state->animation.y = 41;
+            game_state->animation.vy = -(game_state->animation.vy * 0.7f);
         }
     }
 }
@@ -363,11 +383,13 @@ void init(GameState *game_state) {
     game_state->dragging_deck = false;
     game_state->animation.started = false;
     game_state->animation.deck = -1;
-    game_state->animation.x = -1;
+    game_state->animation.x = -21;
     game_state->state = GameStatePlay;
     game_state->dragging_column = 8;
 
     for (uint8_t i = 0; i < 7; i++) {
+        free_hand(&(game_state->bottom_columns[i]));
+        init_hand(&(game_state->bottom_columns[i]), 21);
         game_state->bottom_columns[i].index = 0;
         for (uint8_t j = 0; j <= i; j++) {
             Card cur = remove_from_deck(0, &(game_state->deck));
@@ -391,7 +413,6 @@ void init_start(GameState *game_state) {
     init_hand(&(game_state->dragging_hand), 13);
     game_state->animation.buffer = make_buffer();
 
-    init(game_state);
 }
 
 
@@ -416,15 +437,6 @@ int32_t solitaire_app(void *p) {
     set_card_graphics(&I_card_graphics);
 
     game_state->state = GameStateStart;
-
-    /**
-     * Animate test
-     */
-    game_state->top_cards[0]=(Card){0,0,false,false};
-    game_state->top_cards[1]=(Card){1,0,false,false};
-    game_state->top_cards[2]=(Card){2,0,false,false};
-    game_state->top_cards[3]=(Card){3,0,false,false};
-    //END TEST
 
     game_state->processing = true;
     ValueMutex state_mutex;
@@ -476,8 +488,10 @@ int32_t solitaire_app(void *p) {
                         case InputKeyRight:
                         case InputKeyLeft:
                         case InputKeyOk:
-                            if (event.input.key == InputKeyOk && localstate->state == GameStateStart)
+                            if (event.input.key == InputKeyOk && localstate->state == GameStateStart) {
                                 localstate->state = GameStatePlay;
+                                init(game_state);
+                            }
                             else {
                                 hadChange = true;
                                 localstate->input = event.input.key;
@@ -500,7 +514,7 @@ int32_t solitaire_app(void *p) {
             FURI_LOG_W(APP_NAME, "osMessageQueue: event timeout");
             // event timeout
         }
-        if (hadChange || game_state->state==GameStateAnimate)
+        if (hadChange || game_state->state == GameStateAnimate)
             view_port_update(view_port);
         release_mutex(&state_mutex, localstate);
     }
