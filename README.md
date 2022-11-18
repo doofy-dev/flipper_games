@@ -4,14 +4,24 @@
 ![maintained - yes](https://img.shields.io/badge/maintained-yes-blue)
 ![contributions - welcome](https://img.shields.io/badge/contributions-welcome-blue)
 
-# Blackjack for Flipper Zero
-Place the blackjack.fap file on your SD card in the apps folder
+# Games for Flipper Zero
 
-![Welcome screen](screenshots/welcome_screen.png)
+You can grab the latest builds at the releases page
 
-![Welcome screen](screenshots/play_scene.png)
+## Solitaire
+![Play screen](screenshots/solitaire.png)
 
-![Welcome screen](screenshots/game_over_scene.png)
+![Play screen](screenshots/solitaire.gif)
+
+### Shortcuts
+* Long press up skips the navigation inside the bottom column
+* Long press center to automatically place the card to the top rigth section
+
+----
+
+## Blackjack
+
+![Play screen](screenshots/play_scene.png)
 
 ## Build using the build.sh script
 * Clone the repository recursively `git clone REPO_URL --recursive`
