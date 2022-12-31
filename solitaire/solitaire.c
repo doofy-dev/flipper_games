@@ -34,8 +34,6 @@ int8_t columns[7][3] = {
 };
 
 bool can_place_card(Card where, Card what) {
-    FURI_LOG_D(APP_NAME, "TESTING pip %i, letter %i with pip %i, letter %i", where.pip, where.character, what.pip,
-               what.character);
     bool a_black = where.pip == 0 || where.pip == 3;
     bool b_black = what.pip == 0 || what.pip == 3;
     if (a_black == b_black) return false;
@@ -225,6 +223,9 @@ bool place_on_top(Card *where, Card what) {
         int8_t b_letter = (int8_t) what.character;
         if (a_letter == 12) a_letter = -1;
         if (b_letter == 12) b_letter = -1;
+        if(where->disabled && b_letter!=-1)
+            return false;
+
         if ((a_letter + 1) == b_letter) {
             where->disabled = what.disabled;
             where->pip = what.pip;
