@@ -17,7 +17,7 @@ done
 
 echo $game $build
 
-games="blackjack solitaire"
+games="blackjack solitaire pinball"
 
 if [ "$build" = "unleashed" ]; then
   UNLEASHED=1
