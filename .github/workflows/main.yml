@@ -25,4 +25,4 @@ jobs:
       with:
         path: "firmware/official/scripts/requirements.txt"
     - name: Runing FBT
-      run: build.sh
+      run: cd ${GITHUB_WORKSPACE} && chmod +x build.sh && bash build.sh
