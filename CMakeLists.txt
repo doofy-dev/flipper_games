@@ -11,7 +11,9 @@ include_directories(firmware/unleashed/firmware/targets/f7/furi_hal)
 include_directories(faker)
 include_directories(.)
 
-FILE(GLOB SOURCES blackjack/*.c)
-FILE(GLOB SOURCES solitaire/*.c solitaire/*.h)
+FILE(GLOB SOURCES blackjack/*.c
+        solitaire/*.c solitaire/*.h
+        synth/*.c synth/*.h
+        )
 
 ADD_EXECUTABLE(app ${SOURCES} ${EXTRA})
