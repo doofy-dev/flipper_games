@@ -25,6 +25,13 @@ typedef enum {
     GameStateAnimate
 } PlayState;
 
+typedef struct Vector Vector;
+
+typedef struct {
+    Vector *position;
+    Vector *velocity;
+} Ball;
+
 typedef struct {
     InputKey input;
 
@@ -34,4 +41,6 @@ typedef struct {
     PlayState state;
     unsigned int last_tick;
     uint8_t *buffer;
+    Ball ball;
+
 } GameState;

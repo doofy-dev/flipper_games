@@ -47,7 +47,6 @@ void tick(GameState *game_state, NotificationApp *notification) {
     game_state->last_tick = furi_get_tick();
 
     if (game_state->state != GameStatePlay && game_state->state != GameStateAnimate) return;
-
 }
 
 void init(GameState *game_state) {
@@ -72,7 +71,7 @@ static void update_timer_callback(FuriMessageQueue *event_queue) {
     furi_message_queue_put(event_queue, &event, 0);
 }
 
-int32_t solitaire_app(void *p) {
+int32_t pinball_app(void *p) {
     UNUSED(p);
     int32_t return_code = 0;
     FuriMessageQueue *event_queue = furi_message_queue_alloc(8, sizeof(AppEvent));
