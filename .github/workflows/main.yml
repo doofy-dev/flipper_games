@@ -1,0 +1,28 @@
+name: Build
+on:
+  push:
+    branches:
+    - main
+    - release/*
+  pull_request:
+    branches:
+    - main
+  workflow_dispatch:
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10' 
+    - name: Install Python dependencies
+      uses: py-actions/py-dependency-install@v4
+      with:
+        path: "firmware/official/scripts/requirements.txt"
+    - name: Runing FBT
+      run: cd ${GITHUB_WORKSPACE} && chmod +x build.sh && bash build.sh
