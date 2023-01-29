@@ -39,11 +39,11 @@ int32_t jumper_app(void *p) {
     int32_t return_code = setup((SetupState) {
             "Jumper", sizeof(GameState), init, true, furi_kernel_get_tick_frequency() / 1
     });
-    FURI_LOG_D("Jumper", "scene");
+    FURI_LOG_D("scene", "scene");
     setup_play_scene();
-    FURI_LOG_D("Jumper", "start");
+    FURI_LOG_D("start", "start");
     start_loop();
-    FURI_LOG_D("Jumper", "clean");
+    FURI_LOG_D("clean", "clean");
     cleanup();
     return return_code;
 }

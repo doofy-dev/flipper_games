@@ -26,17 +26,17 @@ struct Component {
 };
 
 //multiple sprite type
-typedef struct{
+struct Sprite{
     const uint8_t *data;
     bool flipped;
     Vector size;
-} Sprite;
+};
 
 
 struct Entity {
     transform_t transform;
     List *components;
-    Sprite sprite;
+    sprite_t sprite;
 
     bool enabled;
     bool draw;

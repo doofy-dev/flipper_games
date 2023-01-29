@@ -30,7 +30,7 @@ typedef struct {
 } AppEvent;
 
 typedef struct{
-    Sprite image;
+    sprite_t image;
     Vector position;
 } RenderInfo;
 

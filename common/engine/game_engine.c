@@ -75,6 +75,7 @@ void start_loop() {
         FURI_LOG_E(AppName, "Cannot start game, load failed!");
         return;
     }
+    engineState->renderQue->render_count=0;
 
     AppEvent event;
     engineState->processing = true;
@@ -152,17 +153,18 @@ void init_tree(List *items) {
 
 void set_scene(Scene *s) {
     FURI_LOG_D(AppName, "SCENE SET");
-//   if (engineState->scene)
-//        clear_scene(engineState->scene);
+   if (engineState->scene)
+        clear_scene(engineState->scene);
     engineState->scene = s;
 
-//    init_tree(s->entities);
+    init_tree(s->entities);
 }
 
 void update_tree(List *items, void *render_state) {
-    return;
     t_ListItem *curr = items->start;
     if (!curr) return;
+    RenderQueue *rq = (RenderQueue *) render_state;
+    rq->render_count=0;
     while (curr) {
         entity_t *e = (entity_t *) curr->data;
         if (e->enabled) {
@@ -175,7 +177,6 @@ void update_tree(List *items, void *render_state) {
             update_tree(e->transform.children, render_state);
         }
         if (e->draw) {
-            RenderQueue *rq = (RenderQueue *) render_state;
             if (rq->render_count < 63) {
                 rq->render_list[rq->render_count + 1] = (RenderInfo){
                     e->sprite, e->transform.position
