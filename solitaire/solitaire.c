@@ -7,7 +7,9 @@
 #include "solitaire_icons.h"
 #include <notification/notification.h>
 #include <notification/notification_messages.h>
+
 void init(GameState *game_state);
+
 const NotificationSequence sequence_fail = {
         &message_vibro_on,
         &message_note_c4,
@@ -51,7 +53,8 @@ static void draw_scene(Canvas *const canvas, const GameState *game_state) {
     if (game_state->dragging_deck)
         deckIndex--;
 
-    if ((game_state->deck.index < (game_state->deck.card_count - 1) || game_state->deck.index == -1) && game_state->deck.card_count>0) {
+    if ((game_state->deck.index < (game_state->deck.card_count - 1) || game_state->deck.index == -1) &&
+        game_state->deck.card_count > 0) {
         draw_card_back_at(columns[0][0], columns[0][1], canvas);
         if (game_state->selectRow == 0 && game_state->selectColumn == 0) {
             draw_rounded_box(canvas, columns[0][0] + 1, columns[0][1] + 1, CARD_WIDTH - 2, CARD_HEIGHT - 2,
@@ -87,8 +90,8 @@ static void draw_scene(Canvas *const canvas, const GameState *game_state) {
 
     for (uint8_t i = 0; i < 7; i++) {
         bool selected = game_state->selectRow == 1 && game_state->selectColumn == i;
-        int8_t index= (game_state->bottom_columns[i].index - 1 - game_state->selected_card);
-        if(index<0)index=0;
+        int8_t index = (game_state->bottom_columns[i].index - 1 - game_state->selected_card);
+        if (index < 0)index = 0;
         draw_hand_column(game_state->bottom_columns[i], columns[i][0], columns[i][2],
                          selected ? index : -1, canvas);
     }
@@ -223,7 +226,7 @@ bool place_on_top(Card *where, Card what) {
         int8_t b_letter = (int8_t) what.character;
         if (a_letter == 12) a_letter = -1;
         if (b_letter == 12) b_letter = -1;
-        if(where->disabled && b_letter!=-1)
+        if (where->disabled && b_letter != -1)
             return false;
 
         if ((a_letter + 1) == b_letter) {
@@ -245,6 +248,7 @@ void tick(GameState *game_state, NotificationApp *notification) {
     if (game_state->state == GameStatePlay) {
         if (game_state->top_cards[0].character == 11 && game_state->top_cards[1].character == 11 &&
             game_state->top_cards[2].character == 11 && game_state->top_cards[3].character == 11) {
+            DOLPHIN_DEED(DolphinDeedPluginGameWin);
             game_state->state = GameStateAnimate;
             return;
         }
@@ -333,7 +337,7 @@ void tick(GameState *game_state, NotificationApp *notification) {
         }
     }
     if (game_state->state == GameStateAnimate) {
-        if (game_state->animation.started && !game_state->longPress && game_state->input==InputKeyOk) {
+        if (game_state->animation.started && !game_state->longPress && game_state->input == InputKeyOk) {
             init(game_state);
             game_state->state = GameStateStart;
         }
@@ -465,6 +469,7 @@ int32_t solitaire_app(void *p) {
     Gui *gui = furi_record_open("gui");
     gui_add_view_port(gui, view_port, GuiLayerFullscreen);
 
+    DOLPHIN_DEED(DolphinDeedPluginGameStart);
     AppEvent event;
     for (bool processing = true; processing;) {
         FuriStatus event_status = furi_message_queue_get(event_queue, &event, 150);
@@ -499,8 +504,7 @@ int32_t solitaire_app(void *p) {
                             if (event.input.key == InputKeyOk && localstate->state == GameStateStart) {
                                 localstate->state = GameStatePlay;
                                 init(game_state);
-                            }
-                            else {
+                            } else {
                                 hadChange = true;
                                 localstate->input = event.input.key;
                             }

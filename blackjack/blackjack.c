@@ -29,7 +29,7 @@ static void draw_ui(Canvas *const canvas, const GameState *game_state) {
     draw_score(canvas, true, hand_count(game_state->player_cards, game_state->player_card_count));
 
     if (!game_state->queue_state.running && game_state->state == GameStatePlay) {
-        render_menu(game_state->menu,canvas, 2, 47);
+        render_menu(game_state->menu, canvas, 2, 47);
     }
 }
 
@@ -77,7 +77,7 @@ void drawPlayerCard(void *ctx) {
     Card c = draw_card(game_state);
     game_state->player_cards[game_state->player_card_count] = c;
     game_state->player_card_count++;
-    if(game_state->player_score < game_state->settings.round_price || game_state->doubled){
+    if (game_state->player_score < game_state->settings.round_price || game_state->doubled) {
         set_menu_state(game_state->menu, 0, false);
     }
 }
@@ -192,7 +192,7 @@ void dealerTurn(void *ctx) {
     game_state->state = GameStateDealer;
 }
 
-float animationTime(const GameState *game_state){
+float animationTime(const GameState *game_state) {
     return (float) (furi_get_tick() - game_state->queue_state.start) /
            (float) (game_state->settings.animation_duration);
 }
@@ -256,11 +256,11 @@ void player_tick(GameState *game_state) {
         enqueue(&(game_state->queue_state), game_state, lose, NULL, to_bust_state,
                 game_state->settings.message_duration);
     } else {
-        if(game_state->selectDirection == DirectionUp || game_state->selectDirection == DirectionDown){
+        if (game_state->selectDirection == DirectionUp || game_state->selectDirection == DirectionDown) {
             move_menu(game_state->menu, game_state->selectDirection == DirectionUp ? -1 : 1);
         }
 
-        if (game_state->selectDirection == Select){
+        if (game_state->selectDirection == Select) {
             activate_menu(game_state->menu, game_state);
 
         }
@@ -275,6 +275,7 @@ void dealer_tick(GameState *game_state) {
         if (dealer_score > 21 || dealer_score < player_score) {
             enqueue(&(game_state->queue_state), game_state, win, NULL, to_win_state,
                     game_state->settings.message_duration);
+            DOLPHIN_DEED(DolphinDeedPluginGameWin);
         } else if (dealer_score > player_score) {
             enqueue(&(game_state->queue_state), game_state, lose, NULL, to_lose_state,
                     game_state->settings.message_duration);
@@ -390,11 +391,11 @@ void tick(GameState *game_state) {
 }
 
 void start_round(GameState *game_state) {
-    game_state->menu->current_menu=1;
+    game_state->menu->current_menu = 1;
     game_state->player_card_count = 0;
     game_state->dealer_card_count = 0;
     set_menu_state(game_state->menu, 0, true);
-    game_state->menu->enabled=true;
+    game_state->menu->enabled = true;
     game_state->started = false;
     game_state->doubled = false;
     game_state->queue_state.running = true;
@@ -411,8 +412,8 @@ void start_round(GameState *game_state) {
 
 void init(GameState *game_state) {
     set_menu_state(game_state->menu, 0, true);
-    game_state->menu->enabled=true;
-    game_state->menu->current_menu=1;
+    game_state->menu->enabled = true;
+    game_state->menu->current_menu = 1;
     game_state->settings = load_settings();
     game_state->last_tick = 0;
     game_state->processing = true;
@@ -434,9 +435,9 @@ static void update_timer_callback(FuriMessageQueue *event_queue) {
     furi_message_queue_put(event_queue, &event, 0);
 }
 
-void doubleAction(void *state){
+void doubleAction(void *state) {
     GameState *game_state = state;
-    if (!game_state->doubled &&  game_state->player_score >= game_state->settings.round_price) {
+    if (!game_state->doubled && game_state->player_score >= game_state->settings.round_price) {
         game_state->player_score -= game_state->settings.round_price;
         game_state->bet += game_state->settings.round_price;
         game_state->doubled = true;
@@ -455,12 +456,13 @@ void doubleAction(void *state){
     }
 }
 
-void hitAction(void *state){
+void hitAction(void *state) {
     GameState *game_state = state;
     enqueue(&(game_state->queue_state), game_state, drawPlayerCard, NULL, player_card_animation,
             game_state->settings.animation_duration);
 }
-void stayAction(void *state){
+
+void stayAction(void *state) {
     GameState *game_state = state;
     enqueue(&(game_state->queue_state), game_state, dealerTurn, NULL, to_dealer_turn,
             game_state->settings.message_duration);
@@ -474,8 +476,8 @@ int32_t blackjack_app(void *p) {
     FuriMessageQueue *event_queue = furi_message_queue_alloc(8, sizeof(AppEvent));
 
     GameState *game_state = malloc(sizeof(GameState));
-    game_state->menu= malloc(sizeof(Menu));
-    game_state->menu->menu_width=40;
+    game_state->menu = malloc(sizeof(Menu));
+    game_state->menu->menu_width = 40;
     init(game_state);
     add_menu(game_state->menu, "Double", doubleAction);
     add_menu(game_state->menu, "Hit", hitAction);
@@ -504,6 +506,7 @@ int32_t blackjack_app(void *p) {
 
     AppEvent event;
 
+    DOLPHIN_DEED(DolphinDeedPluginGameStart);
     for (bool processing = true; processing;) {
         FuriStatus event_status = furi_message_queue_get(event_queue, &event, 100);
         GameState *localstate = (GameState *) acquire_mutex_block(&state_mutex);
