@@ -71,6 +71,7 @@ bool list_splice(List *list, uint32_t index, uint32_t count) {
 
 void list_clear(List *list) {
     t_ListItem *item = list->start;
+    if(item == NULL) return;
     while (item->next) {
         t_ListItem *t = item;
         item = item->next;

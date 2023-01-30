@@ -14,6 +14,9 @@ include_directories(.)
 FILE(GLOB SOURCES blackjack/*.c
         solitaire/*.c solitaire/*.h
         synth/*.c synth/*.h
+        jumper/*.c jumper/*.h
+        common/*.c common/*.h
+        common/engine/*.c common/engine/*.h
         )
 
 ADD_EXECUTABLE(app ${SOURCES} ${EXTRA})

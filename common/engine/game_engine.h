@@ -30,7 +30,7 @@ typedef struct {
 } AppEvent;
 
 typedef struct{
-    sprite_t image;
+    sprite_t *image;
     Vector position;
 } RenderInfo;
 
@@ -68,12 +68,11 @@ typedef struct {
 } SetupState;
 
 
-int32_t setup(SetupState state);
-
-void cleanup();
+int32_t setup_engine(SetupState state);
 
 void start_loop();
 
 void set_scene(Scene *s);
 
 void exit_app();
+

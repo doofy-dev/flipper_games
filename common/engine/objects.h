@@ -15,20 +15,22 @@ struct Transform {
     List *children;
 };
 
-struct Component {
+typedef struct{
     void *data;
-
-    void (*start)(void *state);
-
-    void (*update)(void *state);
-
     entity_t *entity;
+}ComponentInfo;
+
+struct Component {
+    ComponentInfo componentInfo;
+
+    void (*start)(ComponentInfo *component, void *game_state);
+
+    void (*update)(ComponentInfo *component, void *game_state);
 };
 
 //multiple sprite type
 struct Sprite{
     const uint8_t *data;
-    bool flipped;
     Vector size;
 };
 
@@ -50,5 +52,6 @@ typedef struct {
 
 Scene *new_scene(const char* name);
 entity_t *new_entity(const char* name);
-void instantiate_entity(Scene *s, entity_t *entity);
+void add_to_scene(Scene *s, entity_t *entity);
 void clear_scene(Scene *scene);
+void add_component(entity_t *entity, void (*start)(ComponentInfo *component, void *state), void (*update)(ComponentInfo *component, void *state), size_t data_size);

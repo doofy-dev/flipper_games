@@ -5,26 +5,46 @@
 #include "defines.h"
 #include "jumper_icons.h"
 
-void setup_play_scene() {
-    FURI_LOG_D("SCENE", "new scene");
+typedef struct {
+    float range;
+    bool flipped;
+} ball_data;
+
+void init_ball(ComponentInfo *component, void *state) {
+    UNUSED(state);
+    ball_data *data = (ball_data *) component->data;
+    data->range = 10;
+    data->flipped = false;
+}
+
+void update_ball(ComponentInfo *component, void *state) {
+    UNUSED(state);
+    ball_data *data = (ball_data *) component->data;
+    component->entity->transform.position.x += data->flipped ? -1 : 1;
+
+    if (component->entity->transform.position.x > data->range || component->entity->transform.position.x <= 0)
+        data->flipped = !data->flipped;
+}
+
+Scene *setup_play_scene() {
+    //Create new scene
     Scene *s = new_scene("Play");
-    FURI_LOG_D("SCENE", "new entity");
+    //Create new entity and set up data for it
     entity_t *e = new_entity("Ball");
-/*
-    FURI_LOG_D("SCENE", "sprite");
+    e->transform.position = (Vector) {10, 10};
+    //Store image that will be drawn on render
     e->sprite.data = icon_get_data(&I_ball);
-    FURI_LOG_D("SCENE", "sprite size");
-    e->sprite.size=(Vector){16,16};
-    FURI_LOG_D("SCENE", "sprite draw");
+    //Size of the image
+    e->sprite.size = (Vector) {16, 16};
+    //Enable drawing
     e->draw = true;
-    */
-    FURI_LOG_D("SCENE", "init");
-    instantiate_entity(s, e);
 
-    FURI_LOG_D("SCENE", "set");
-    set_scene(s);
-    FURI_LOG_D("SCENE", "after set");
+    add_component(e, init_ball, update_ball, sizeof(ball_data));
 
+    //Add to scene
+    add_to_scene(s, e);
+
+    return s;
 }
 
 
@@ -34,16 +54,16 @@ void init(void *state) {
 
 int32_t jumper_app(void *p) {
     UNUSED(p);
+    Scene *scene = setup_play_scene();
 
-    FURI_LOG_D("Jumper", "setup");
-    int32_t return_code = setup((SetupState) {
-            "Jumper", sizeof(GameState), init, true, furi_kernel_get_tick_frequency() / 1
+    int32_t return_code = setup_engine((SetupState) {
+            "Game",                                 //APP name
+            sizeof(GameState),                      //size of game state
+            init,                                   //callback to initialize game state
+            true,                                   //keep backlight on
+            furi_kernel_get_tick_frequency() / 1    //update freq
     });
-    FURI_LOG_D("scene", "scene");
-    setup_play_scene();
-    FURI_LOG_D("start", "start");
-    start_loop();
-    FURI_LOG_D("clean", "clean");
-    cleanup();
+    set_scene(scene);
+    start_loop();                                   //start main loop
     return return_code;
 }
