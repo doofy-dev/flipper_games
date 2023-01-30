@@ -11,6 +11,7 @@ static void update(RenderQueue *queue) {
 }
 
 static void render(Canvas *const canvas, void *ctx) {
+
     const RenderQueue *queue = acquire_mutex((ValueMutex *) ctx, 25);
     if (queue == NULL) {
         return;
@@ -71,7 +72,7 @@ int32_t setup_engine(SetupState state) {
 
     engineState->timer = furi_timer_alloc(update_timer, FuriTimerTypePeriodic, (engineState->event_queue));
 
-    furi_timer_start(engineState->timer, state.tickRate);
+    furi_timer_start(engineState->timer, furi_kernel_get_tick_frequency() / state.tickRate);
 
     engineState->gui = furi_record_open("gui");
 
@@ -117,7 +118,7 @@ void start_loop() {
     FURI_LOG_D("FlipperGameEngine", "Entering main loop");
     while (engineState->processing) {
 
-        FuriStatus event_status = furi_message_queue_get(engineState->event_queue, &event, 150);
+        FuriStatus event_status = furi_message_queue_get(engineState->event_queue, &event, 25);
 
         RenderQueue *render_state = (RenderQueue *) acquire_mutex_block(&(engineState->render_mutex));
         if (render_state == NULL) {
@@ -146,7 +147,8 @@ void start_loop() {
         }/* else {
             FURI_LOG_D("FlipperGameEngine", "osMessageQueue: event timeout");
         }*/
-        view_port_update(engineState->viewPort);
+        if(engineState->renderQue->render_count>0)
+            view_port_update(engineState->viewPort);
         release_mutex(&(engineState->render_mutex), render_state);
     }
     FURI_LOG_D("FlipperGameEngine", "Exiting main loop");

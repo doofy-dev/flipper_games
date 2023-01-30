@@ -1,6 +1,4 @@
-#include <stdlib.h>
 #include <furi.h>
-#include <dolphin/dolphin.h>
 #include "common/engine/game_engine.h"
 #include "defines.h"
 #include "jumper_icons.h"
@@ -47,7 +45,6 @@ Scene *setup_play_scene() {
     return s;
 }
 
-
 void init(void *state) {
     UNUSED(state);
 }
@@ -57,11 +54,11 @@ int32_t jumper_app(void *p) {
     Scene *scene = setup_play_scene();
 
     int32_t return_code = setup_engine((SetupState) {
-            "Game",                                 //APP name
-            sizeof(GameState),                      //size of game state
-            init,                                   //callback to initialize game state
-            true,                                   //keep backlight on
-            furi_kernel_get_tick_frequency() / 1    //update freq
+            "Game",             //APP name
+            sizeof(GameState),  //size of game state
+            init,               //callback to initialize game state
+            true,               //keep backlight on
+            30                  //update freq
     });
     set_scene(scene);
     start_loop();                                   //start main loop

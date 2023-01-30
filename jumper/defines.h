@@ -16,11 +16,5 @@ typedef enum {
 } PlayState;
 
 typedef struct {
-    InputKey input;
-    bool started;
-    bool processing;
-    bool longPress;
     PlayState state;
-    unsigned int last_tick;
-    uint8_t *buffer;
 } GameState;
