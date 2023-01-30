@@ -44,7 +44,7 @@ static void update_timer(FuriMessageQueue *event_queue) {
 }
 
 int32_t setup_engine(SetupState state) {
-    FURI_LOG_E("FlipperGameEngine", "Setting up engine for game %s", state.AppName);
+    FURI_LOG_D("FlipperGameEngine", "Setting up engine for game %s", state.AppName);
     AppName = state.AppName;
     engineState = malloc(sizeof(EngineState));
     engineState->event_queue = furi_message_queue_alloc(8, sizeof(AppEvent));
