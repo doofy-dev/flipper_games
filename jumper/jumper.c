@@ -26,7 +26,7 @@ void update_ball(ComponentInfo *component, void *state) {
         data->flipped = !data->flipped;
 }
 
-Scene *setup_play_scene() {
+void setup_play_scene() {
     //Create new scene
     Scene *s = new_scene("Play");
     //Create new entity and set up data for it
@@ -59,8 +59,7 @@ Scene *setup_play_scene() {
     add_to_scene(s, e);
     add_to_scene(s, e2);
     add_to_scene(s, e3);
-
-    return s;
+    set_scene(s);
 }
 
 void init(void *state) {
@@ -69,8 +68,6 @@ void init(void *state) {
 
 int32_t jumper_app(void *p) {
     UNUSED(p);
-    Scene *scene = setup_play_scene();
-
     int32_t return_code = setup_engine((SetupState) {
             "Game",             //APP name
             sizeof(GameState),  //size of game state
@@ -78,7 +75,7 @@ int32_t jumper_app(void *p) {
             true,               //keep backlight on
             30                  //update freq
     });
-    set_scene(scene);
+    setup_play_scene();
     start_loop();                                   //start main loop
     return return_code;
 }
