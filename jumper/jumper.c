@@ -4,7 +4,8 @@
 #include "jumper_icons.h"
 
 typedef struct {
-    float range;
+    int range;
+    int center;
     bool flipped;
 } ball_data;
 
@@ -12,15 +13,16 @@ void init_ball(ComponentInfo *component, void *state) {
     UNUSED(state);
     ball_data *data = (ball_data *) component->data;
     data->range = 10;
-    data->flipped = false;
+    data->center = component->entity->transform.position.x + data->range/2;
+    data->flipped = component->entity->transform.position.x>10? true : false;
 }
 
 void update_ball(ComponentInfo *component, void *state) {
     UNUSED(state);
     ball_data *data = (ball_data *) component->data;
     component->entity->transform.position.x += data->flipped ? -1 : 1;
-
-    if (component->entity->transform.position.x > data->range || component->entity->transform.position.x <= 0)
+    int diff = component->entity->transform.position.x - data->center;
+    if (abs(diff)>=data->range)
         data->flipped = !data->flipped;
 }
 
@@ -37,10 +39,26 @@ Scene *setup_play_scene() {
     //Enable drawing
     e->draw = true;
 
+    entity_t *e2 = new_entity("Ball2");
+    e2->transform.position = (Vector) {40, 10};
+    e2->sprite.data = icon_get_data(&I_ball);
+    e2->sprite.size = (Vector) {16, 16};
+    e2->draw = true;
+
+    entity_t *e3 = new_entity("Ball3");
+    e3->transform.position = (Vector) {20, 30};
+    e3->sprite.data = icon_get_data(&I_ball);
+    e3->sprite.size = (Vector) {16, 16};
+    e3->draw = true;
+
     add_component(e, init_ball, update_ball, sizeof(ball_data));
+    add_component(e2, init_ball, update_ball, sizeof(ball_data));
+    add_component(e3, init_ball, update_ball, sizeof(ball_data));
 
     //Add to scene
     add_to_scene(s, e);
+    add_to_scene(s, e2);
+    add_to_scene(s, e3);
 
     return s;
 }
