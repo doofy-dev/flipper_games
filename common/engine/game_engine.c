@@ -121,6 +121,10 @@ void start_loop() {
         FuriStatus event_status = furi_message_queue_get(engineState->event_queue, &event, 25);
 
         RenderQueue *render_state = (RenderQueue *) acquire_mutex_block(&(engineState->render_mutex));
+        unsigned int tick = furi_get_tick();
+
+        engineState->tick_delta = tick - engineState->last_tick;
+        engineState->last_tick = tick;
         if (render_state == NULL) {
             FURI_LOG_E("FlipperGameEngine", "render state mutex failed");
             continue;
@@ -212,4 +216,12 @@ void update_tree(List *items, RenderQueue *render_state, Vector position) {
 
 void exit_app() {
     engineState->processing = false;
+}
+
+unsigned int delta_tick() {
+    return engineState->tick_delta;
+}
+
+unsigned int frame_tick() {
+    return engineState->last_tick;
 }

@@ -29,12 +29,12 @@ typedef struct {
     InputEvent inputEvent;
 } AppEvent;
 
-typedef struct{
+typedef struct {
     sprite_t *image;
     Vector position;
 } RenderInfo;
 
-typedef struct{
+typedef struct {
     RenderInfo render_list[64];
     uint8_t render_count;
 } RenderQueue;
@@ -43,6 +43,7 @@ typedef struct {
     InputState inputState[7];
     LastInput lastInput;
     unsigned int last_tick;
+    unsigned int tick_delta;
     FuriMessageQueue *event_queue;
     void *gameState;
     ValueMutex render_mutex;
@@ -73,6 +74,10 @@ int32_t setup_engine(SetupState state);
 void start_loop();
 
 void set_scene(Scene *s);
+
+unsigned int delta_tick();
+
+unsigned int frame_tick();
 
 void exit_app();
 

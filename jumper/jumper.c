@@ -85,7 +85,7 @@ int32_t jumper_app(void *p) {
             sizeof(GameState),  //size of game state
             init,               //callback to initialize game state
             true,               //keep backlight on
-            30                  //update freq
+            25                  //update freq
     });
     setup_play_scene();
     start_loop();                                   //start main loop
