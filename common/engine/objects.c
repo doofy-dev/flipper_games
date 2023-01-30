@@ -76,12 +76,27 @@ void add_component(entity_t *entity, void (*start)(ComponentInfo *component, voi
     list_add(entity->components, component);
 }
 
-void add_to_entity(entity_t *parent, entity_t *child){
+bool is_child_of(entity_t *a, entity_t *b) {
+    t_ListItem *s = a->transform.children->start;
+    do {
+        if (s && s->data) {
+            if (s->data == b || is_child_of(s->data, b)) {
+                return true;
+            }
+        }
+    } while (s != NULL);
+    return false;
+}
 
-    if(child->transform.parent!=NULL){
+void add_to_entity(entity_t *parent, entity_t *child) {
+    if (is_child_of(child, parent)) {
+        FURI_LOG_E("FlipperGameEngine", "Cannot add to parent. Child already contains reference to parent!");
+        return;
+    }
+    if (child->transform.parent != NULL) {
         list_remove_item(child->transform.parent->transform.children, child);
     }
 
     list_add(parent->transform.children, child);
-    child->transform.parent=parent;
+    child->transform.parent = parent;
 }
