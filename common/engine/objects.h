@@ -11,7 +11,7 @@ typedef struct Sprite sprite_t;
 struct Transform {
     Vector position;
     entity_t *entity;
-    transform_t *parent;
+    entity_t *parent;
     List *children;
 };
 
@@ -55,3 +55,4 @@ entity_t *new_entity(const char* name);
 void add_to_scene(Scene *s, entity_t *entity);
 void clear_scene(Scene *scene);
 void add_component(entity_t *entity, void (*start)(ComponentInfo *component, void *state), void (*update)(ComponentInfo *component, void *state), size_t data_size);
+void add_to_entity(entity_t *parent, entity_t *child);

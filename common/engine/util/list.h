@@ -20,3 +20,4 @@ void list_add(List *list, void *data);
 bool list_splice(List *list, uint32_t index, uint32_t count);
 void list_clear(List *list);
 void list_free(List *list);
+void list_remove_item(List *list, void *data);

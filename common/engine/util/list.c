@@ -24,6 +24,24 @@ void list_add(List *list, void *data) {
     }
 }
 
+void list_remove_item(List *list, void *data) {
+    t_ListItem *s = list->start;
+    if (s == NULL) return;
+    if (s == data) {
+        list->start = s->next;
+        list->count--;
+    } else {
+        while (s != NULL) {
+            if (s->next == data) {
+                s->next = s->next->next;
+                list->count--;
+                return;
+            }
+            s = s->next;
+        }
+    }
+}
+
 void *list_get(List *list, uint32_t index) {
     if (index < list->count) {
         uint32_t curr_id = 0;
@@ -71,11 +89,11 @@ bool list_splice(List *list, uint32_t index, uint32_t count) {
 
 void list_clear(List *list) {
     t_ListItem *item = list->start;
-    if(item == NULL) return;
+    if (item == NULL) return;
     while (item->next) {
         t_ListItem *t = item;
         item = item->next;
-        if(t->data)
+        if (t->data)
             free(t->data);
         free(t);
     }

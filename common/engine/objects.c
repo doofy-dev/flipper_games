@@ -75,3 +75,13 @@ void add_component(entity_t *entity, void (*start)(ComponentInfo *component, voi
         component->componentInfo.data = malloc(data_size);
     list_add(entity->components, component);
 }
+
+void add_to_entity(entity_t *parent, entity_t *child){
+
+    if(child->transform.parent!=NULL){
+        list_remove_item(child->transform.parent->transform.children, child);
+    }
+
+    list_add(parent->transform.children, child);
+    child->transform.parent=parent;
+}

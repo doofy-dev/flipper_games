@@ -3,11 +3,11 @@
 EngineState *engineState;
 const char *AppName;
 
-void update_tree(List *items, RenderQueue *render_state);
+void update_tree(List *items, RenderQueue *render_state, Vector position);
 
 static void update(RenderQueue *queue) {
     queue->render_count = 0;
-    update_tree(engineState->scene->entities, queue);
+    update_tree(engineState->scene->entities, queue, (Vector) {0, 0});
 }
 
 static void render(Canvas *const canvas, void *ctx) {
@@ -147,7 +147,7 @@ void start_loop() {
         }/* else {
             FURI_LOG_D("FlipperGameEngine", "osMessageQueue: event timeout");
         }*/
-        if(engineState->renderQue->render_count>0)
+        if (engineState->renderQue->render_count > 0)
             view_port_update(engineState->viewPort);
         release_mutex(&(engineState->render_mutex), render_state);
     }
@@ -183,7 +183,7 @@ void set_scene(Scene *s) {
     init_tree(s->entities);
 }
 
-void update_tree(List *items, RenderQueue *render_state) {
+void update_tree(List *items, RenderQueue *render_state, Vector position) {
     t_ListItem *curr = items->start;
     if (!curr) return;
     while (curr) {
@@ -195,12 +195,13 @@ void update_tree(List *items, RenderQueue *render_state) {
                 c->update(&(c->componentInfo), engineState->gameState);
                 component = component->next;
             }
-            update_tree(e->transform.children, render_state);
+            update_tree(e->transform.children, render_state, vector_add(position, e->transform.position));
         }
         if (e->draw) {
             if (render_state->render_count < 63) {
                 render_state->render_list[render_state->render_count].image = &(e->sprite);
-                render_state->render_list[render_state->render_count].position = e->transform.position;
+                render_state->render_list[render_state->render_count].position = vector_add(e->transform.position,
+                                                                                            position);
                 render_state->render_count++;
             }
         }
