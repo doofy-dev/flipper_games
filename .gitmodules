@@ -1,6 +1,12 @@
-[submodule "firmware/official"]
-	path = firmware/official
-	url = https://github.com/flipperdevices/flipperzero-firmware.git
-[submodule "firmware/unleashed"]
-	path = firmware/unleashed
-	url = https://github.com/DarkFlippers/unleashed-firmware.git
+[submodule "blackjack"]
+	path = blackjack
+	url = https://github.com/teeebor/flipper_blackjack.git
+[submodule "solitaire"]
+	path = solitaire
+	url = https://github.com/teeebor/flipper_solitaire.git
+[submodule "common"]
+	path = common
+	url = https://github.com/teeebor/flipper_helpers.git
+[submodule "flipper-game-engine"]
+	path = flipper-game-engine
+	url = https://github.com/teeebor/flipper-game-engine.git
