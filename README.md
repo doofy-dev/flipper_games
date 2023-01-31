@@ -3,7 +3,6 @@
 [![issues - flipper-zero_authenticator](https://img.shields.io/github/issues/teeebor/flipper_games)](https://github.com/teeebor/flipper_games/issues)
 ![maintained - yes](https://img.shields.io/badge/maintained-yes-blue)
 ![contributions - welcome](https://img.shields.io/badge/contributions-welcome-blue)
-[![Build](https://github.com/teeebor/flipper_games/actions/workflows/main.yml/badge.svg)](https://github.com/teeebor/flipper_games/actions/workflows/main.yml)
 # Games for Flipper Zero
 
 ## Solitaire
