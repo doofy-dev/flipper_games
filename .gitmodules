@@ -1,0 +1,12 @@
+[submodule "blackjack"]
+	path = blackjack
+	url = https://github.com/teeebor/flipper_blackjack.git
+[submodule "solitaire"]
+	path = solitaire
+	url = https://github.com/teeebor/flipper_solitaire.git
+[submodule "common"]
+	path = common
+	url = https://github.com/teeebor/flipper_helpers.git
+[submodule "flipper-game-engine"]
+	path = flipper-game-engine
+	url = https://github.com/teeebor/flipper-game-engine.git
