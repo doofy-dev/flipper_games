@@ -29,7 +29,7 @@
 
 - CMakeLists.txt
 
-    A small cmake file to set up some flipper include paths.
+    A small cmake file to set up some flipper include paths. I use it to tell Clion what to index.
 
 - build_flipper_application.sh
 

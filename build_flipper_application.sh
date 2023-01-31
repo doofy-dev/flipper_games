@@ -42,6 +42,8 @@ rm -rf ${FIRMWARE_PATH}/applications_user/${GAME_NAME}
 rm -rf builds/$GAME_NAME.fap
 
 cp -R $PROJECT_DIR ${FIRMWARE_PATH}/applications_user/${GAME_NAME}
+rm ${FIRMWARE_PATH}/applications_user/${GAME_NAME}/CMakeLists.txt
+rm -R ${FIRMWARE_PATH}/applications_user/${GAME_NAME}/cmake-build-debug
 build_app ${FIRMWARE_PATH} fap_${GAME_NAME}
 
 if [ ! -d "$PROJECT_DIR/builds" ]; then
